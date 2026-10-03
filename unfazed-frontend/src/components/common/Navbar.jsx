@@ -15,13 +15,13 @@ export default function Navbar() {
             </Button>
           ) : (
             <>
-              <Button to="/portal/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
+              <Button to="/portal/login" variant="ghost" size="sm" className="max-sm:hidden">
                 Client login
               </Button>
               <Button to="/login" variant="secondary" size="sm">
                 Therapist login
               </Button>
-              <Button to="/register" size="sm" className="hidden sm:inline-flex">
+              <Button to="/register" size="sm" className="max-sm:hidden">
                 Start free
               </Button>
             </>

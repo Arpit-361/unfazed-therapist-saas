@@ -376,6 +376,8 @@ To host a credential-free demo instead, set `DEMO_MODE=true` and leave `MONGO_UR
 - S3 storage requires installing the optional `@aws-sdk/client-s3` package; without it the server falls back to local storage.
 - Video sessions are out of scope: sessions are booked online, but the video call happens on the therapist's own platform.
 - The scheduler runs in-process; a multi-instance deployment would need a shared job queue and a Socket.io adapter (e.g. Redis).
+- Deployment is configuration-ready (`render.yaml`, `vercel.json`, steps above) but has not been performed, since it needs hosting and MongoDB Atlas accounts.
+- Git history is a single `master` branch with feature-sized commits rather than the one-branch-per-module workflow suggested in the specification.
 
 ---
 

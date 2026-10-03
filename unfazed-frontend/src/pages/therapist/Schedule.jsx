@@ -250,7 +250,7 @@ export default function Schedule() {
   const { socket } = useSocket();
   const [tab, setTab] = useState('calendar');
   const [date, setDate] = useState(new Date());
-  const [view, setView] = useState('week');
+  const [view, setView] = useState(() => (window.matchMedia('(max-width: 639px)').matches ? 'day' : 'week'));
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -310,7 +310,7 @@ export default function Schedule() {
         description="Your sessions, availability and waitlist."
         actions={
           <>
-            <Button variant="secondary" to="/dashboard/settings" className="hidden sm:inline-flex">
+            <Button variant="secondary" to="/dashboard/settings" className="max-sm:hidden">
               Services & prices
             </Button>
             <Button icon={CalendarPlus} onClick={() => setBookOpen(true)}>
