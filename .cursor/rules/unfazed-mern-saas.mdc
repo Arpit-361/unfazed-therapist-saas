@@ -1,0 +1,72 @@
+---
+description: Unfazed MERN SaaS architecture, privacy, entitlements, and agent workflow
+alwaysApply: true
+---
+
+# Unfazed Project Rule
+
+Unfazed is a MERN SaaS platform for therapists in India. Prefer working, simple certification-ready code over unnecessary dependencies or over-engineering.
+
+## Stack
+
+- Frontend: React + Vite, Axios, Socket.io client
+- Backend: Node.js + Express, MongoDB + Mongoose, Socket.io
+- Payments: Razorpay test mode (webhook confirmation)
+- Email/notifications: Nodemailer/notification service
+- Isolate third-party integrations behind service interfaces; stub when the spec allows
+
+## Layout
+
+Backend `src/`: `config/`, `models/`, `controllers/`, `routes/`, `middleware/`, `services/`, `sockets/`, `utils/`
+
+Frontend `src/`: `api/`, `components/`, `pages/`, `context/`, `hooks/`, `routes/`, `utils/`
+
+## Entitlements (critical)
+
+- Centralize subscription/feature checks in one `entitlementService`
+- Use `canAccess(therapistId, featureKey)` only — never scatter subscription-tier string checks in routes or React components
+- `SubscriptionTierConfig` is the source of tier config
+- Monetary values, limits, caps, and feature flags must be configuration-driven
+
+## Privacy, auth, and secrets
+
+- Isolate therapist data between therapists
+- Private clinical notes must NEVER be returned through client-facing API routes
+- Enforce authorization and privacy at the backend/API layer, not only in the frontend
+- Never expose server secrets to frontend code; use environment variables
+
+## Domain constraints
+
+- Prevent double-booking at the backend level
+- Analytics must use MongoDB aggregation pipelines
+- Validate important backend inputs and handle errors consistently
+- Do not leave TODO placeholders for required functionality when a practical implementation is possible
+
+## Project conventions
+
+- Repos: `unfazed-backend/` (CommonJS, Express 5, Mongoose 9) and `unfazed-frontend/` (React 19, Vite, Tailwind v4)
+- Roles: `therapist` and `client` JWTs; client tokens carry `tid` and every portal query is scoped to that client + therapist
+- Money is stored in integer paise; GST is added on top, the tier's platform fee is deducted from therapist net
+- Notes are private by default; client routes use `findSharedForClient` + `serializeNoteForClient` only
+- Double-booking is blocked by `slot_keys` with a unique partial index (409 on conflict)
+- `DEMO_MODE=true` swaps only providers (in-memory MongoDB, HMAC-signed demo gateway via `verifyAndCapture`, email/WhatsApp stubs, local storage); never bypass auth, entitlements or verification in demo paths
+- Validate with `npm test` (backend) and `npm run lint` + `npm run build` (frontend)
+
+## Required functionality
+
+Auth/profile → branded therapist link → timezone-aware scheduling → client CRM/intake/consent → Razorpay packages/invoices → private/shared clinical notes → Socket.io chat/notifications → entitlements → analytics dashboard
+
+## Implementation order
+
+foundation → database → authentication → therapist profile → scheduling → CRM → payments → clinical notes → chat/notifications → entitlements → analytics → final integration/testing/deployment
+
+## Agent workflow
+
+When implementing a feature:
+
+1. Inspect relevant existing files and dependencies before changing code
+2. Implement end-to-end; preserve working functionality
+3. Run relevant build, test, lint, or app commands
+4. Fix validation errors and re-run until the feature works or a genuine external blocker exists
+
+Do not stop after merely creating files. Do not claim functionality works without validating it.
