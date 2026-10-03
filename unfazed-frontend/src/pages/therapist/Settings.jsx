@@ -85,7 +85,7 @@ function ProfileTab({ form, set, therapist, onPhoto }) {
             <Input value={form.name} onChange={(e) => set({ name: e.target.value })} />
           </Field>
           <Field label="Professional title">
-            <Input value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="Clinical Psychologist" />
+            <Input value={form.title} onChange={(e) => set({ title: e.target.value })} placeholder="e.g. Counsellor" />
           </Field>
         </div>
         <Field
@@ -110,7 +110,7 @@ function ProfileTab({ form, set, therapist, onPhoto }) {
           </Field>
         </div>
         <Field label="Qualifications">
-          <Input value={form.qualifications} maxLength={300} onChange={(e) => set({ qualifications: e.target.value })} placeholder="e.g. M.Phil Clinical Psychology (RCI Reg. A12345)" />
+          <Input value={form.qualifications} maxLength={300} onChange={(e) => set({ qualifications: e.target.value })} placeholder="Your degrees and registration details" />
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Experience (years)">

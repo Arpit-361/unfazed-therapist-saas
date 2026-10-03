@@ -1,6 +1,7 @@
 /**
- * Realistic demo data: two therapists on different plans, clients with intake/consent,
- * six months of sessions, payments, packages, notes, chat, leads and notifications.
+ * Demo data for the single demo therapist (Arpit Shukla, a software-demo profile with no
+ * professional credentials): clients with intake/consent, six months of sessions, payments,
+ * packages, notes, chat, leads and notifications. All people and records are fictional.
  */
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
@@ -99,7 +100,7 @@ async function seedDatabase({ reset = true } = {}) {
 
   // ---------- Therapists ----------
   const arpit = await Therapist.create({
-    email: 'arpit.shukla@unfazed.demo',
+    email: 'arpit@unfazed.demo',
     password_hash: passwordHash,
     name: 'Arpit Shukla',
     slug: 'arpit-shukla',
@@ -122,23 +123,6 @@ async function seedDatabase({ reset = true } = {}) {
     ],
   });
 
-  const iyer = await Therapist.create({
-    email: 'dr.iyer@unfazed.demo',
-    password_hash: passwordHash,
-    name: 'Dr. Rohan Iyer',
-    slug: 'dr-iyer',
-    title: 'Counselling Psychologist',
-    bio: 'I work with students and young professionals on stress, focus, ADHD and self-esteem using a practical, strengths-based approach.',
-    specializations: ['Stress', 'ADHD', 'Student counselling', 'Self-esteem'],
-    languages: ['English', 'Tamil', 'Kannada'],
-    qualifications: 'M.Sc Counselling Psychology, Christ University',
-    experience_years: 4,
-    city: 'Bengaluru',
-    phone: '+919800000002',
-    subscription_tier: 'free',
-    services: [{ title: 'Counselling Session', description: 'Online one-on-one counselling.', duration_minutes: 60, price: toPaise(1200) }],
-  });
-
   await Availability.create([
     {
       therapist_id: arpit._id,
@@ -157,15 +141,6 @@ async function seedDatabase({ reset = true } = {}) {
       session_durations: [30, 45, 60, 90],
       min_notice_hours: 4,
       booking_window_days: 45,
-    },
-    {
-      therapist_id: iyer._id,
-      timezone: TZ,
-      weekly: [2, 4, 6].map((d) => ({ day_of_week: d, start: '16:00', end: '20:00' })),
-      buffer_minutes: 15,
-      session_durations: [60],
-      min_notice_hours: 12,
-      booking_window_days: 30,
     },
   ]);
 
@@ -197,6 +172,7 @@ async function seedDatabase({ reset = true } = {}) {
     { name: 'Arjun Kapoor', email: 'arjun@client.demo', phone: '+919811111117', tags: ['grief'], months: 3, concern: 'Grief after the loss of a parent.' },
     { name: 'Ishita Das', email: 'ishita@client.demo', phone: '+919811111118', tags: ['anxiety', 'students'], months: 2, concern: 'Exam anxiety and perfectionism.' },
     { name: 'Vikram Rao', email: 'vikram@client.demo', phone: '+919811111119', tags: ['relationships'], months: 6, status: 'inactive', concern: 'Pre-marital counselling.' },
+    { name: 'Kavya Menon', email: 'kavya@client.demo', phone: '+919811111121', tags: ['students'], password: true, months: 2, concern: 'Academic stress and difficulty focusing.' },
   ];
 
   const arpitClients = [];
@@ -222,30 +198,6 @@ async function seedDatabase({ reset = true } = {}) {
   arpitClients.push(
     await Client.create({ therapist_id: arpit._id, name: 'Neha Kapoor', email: 'neha@client.demo', phone: '+919811111120', status: 'invited', tags: ['new'] })
   );
-
-  const iyerClients = [];
-  const iyerData = [
-    ['Kavya Menon', 'kavya@client.demo', true],
-    ['Aditya Kumar', 'aditya@client.demo'],
-    ['Lakshmi Pillai', 'lakshmi@client.demo'],
-    ['Nikhil Shetty', 'nikhil@client.demo'],
-    ['Divya Hegde', 'divya@client.demo'],
-  ];
-  for (const [name, email, password] of iyerData) {
-    const joined = new Date(now.getTime() - 60 * DAY);
-    iyerClients.push(
-      await Client.create({
-        therapist_id: iyer._id,
-        name,
-        email,
-        password_hash: password ? passwordHash : undefined,
-        status: 'active',
-        intake: intake('Academic stress and difficulty focusing.', joined),
-        consent_records: [consentRecord(joined)],
-        createdAt: joined,
-      })
-    );
-  }
 
   // ---------- Sessions & payments ----------
   const sessions = [];
@@ -428,14 +380,6 @@ async function seedDatabase({ reset = true } = {}) {
     addSession({ therapist: arpit, client: arpitClients[idx], start, service: services[60], status: 'confirmed', buffer: 10, paymentStatus: 'paid', feePercent: 3 });
   }
 
-  // Dr. Iyer: a handful of sessions
-  const iyerService = iyer.services[0];
-  for (let w = 8; w >= 1; w -= 1) {
-    const client = iyerClients[w % iyerClients.length];
-    addSession({ therapist: iyer, client, start: istDate(-w * 7 + 1, '17:00'), service: iyerService, status: w === 3 ? 'no_show' : 'completed', buffer: 15, paymentStatus: 'paid', feePercent: 5 });
-  }
-  addSession({ therapist: iyer, client: iyerClients[0], start: istDate(3, '18:00'), service: iyerService, status: 'confirmed', buffer: 15, paymentStatus: 'paid', feePercent: 5 });
-
   await Session.insertMany(sessions);
   await Payment.insertMany(payments);
 
@@ -520,7 +464,7 @@ async function seedDatabase({ reset = true } = {}) {
     { therapist_id: arpit._id, name: 'Tanvi Shah', email: 'tanvi@lead.demo', phone: '+919822222221', message: 'Looking for help with anxiety around a career change. Do you offer evening sessions?', status: 'new' },
     { therapist_id: arpit._id, name: 'Rohit Malhotra', email: 'rohit@lead.demo', message: 'My partner and I want couples counselling in Hindi.', status: 'contacted', createdAt: new Date(now.getTime() - 3 * DAY) },
     { therapist_id: arpit._id, name: 'Ayesha Khan', email: 'ayesha@lead.demo', message: 'Interested in sessions for burnout.', status: 'new', source: 'directory', createdAt: new Date(now.getTime() - DAY) },
-    { therapist_id: iyer._id, name: 'Sameer Joshi', email: 'sameer@lead.demo', message: 'Need help with exam stress.', status: 'new' },
+    { therapist_id: arpit._id, name: 'Sameer Joshi', email: 'sameer@lead.demo', message: 'Need help with exam stress.', status: 'closed', createdAt: new Date(now.getTime() - 6 * DAY) },
   ]);
 
   // ---------- Notifications ----------
@@ -531,9 +475,9 @@ async function seedDatabase({ reset = true } = {}) {
   ]);
 
   console.log(
-    `[seed] Seeded 2 therapists, ${arpitClients.length + iyerClients.length} clients, ${sessions.length} sessions, ${payments.length} payments. Demo password: ${config.demoPassword}`
+    `[seed] Seeded demo therapist Arpit Shukla with ${arpitClients.length} clients, ${sessions.length} sessions, ${payments.length} payments. Demo password: ${config.demoPassword}`
   );
-  return { arpit, iyer };
+  return { arpit };
 }
 
 module.exports = { seedDatabase, clearDatabase };

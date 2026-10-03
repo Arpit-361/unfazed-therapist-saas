@@ -250,7 +250,7 @@ With `DEMO_MODE=false`, the server refuses to start without `MONGO_URI` and `JWT
 | Area | Real behaviour | Simulated in demo mode |
 | --- | --- | --- |
 | Database | MongoDB via `MONGO_URI` | `mongodb-memory-server` in-process MongoDB (real Mongo engine, including unique indexes and aggregations), **wiped on every restart** and re-seeded |
-| Seed data | `npm run seed` on demand | Auto-seeded: 2 therapists, 15 clients, ~150 sessions, ~150 payments, packages, notes, chats, leads |
+| Seed data | `npm run seed` on demand | Auto-seeded: one demo therapist (Arpit Shukla), 11 clients, ~140 sessions, ~140 payments, packages, notes, chats, leads |
 | JWT secret | `JWT_SECRET` | If unset, an ephemeral random secret is generated per process (everyone is logged out on restart) |
 | Payments | Razorpay Orders + Checkout, signature verification, webhook | **Demo gateway**: creates `order_demo_*` orders; the "Pay" button asks the server to simulate checkout, which returns a payment id **HMAC-signed with a per-process secret**; that signature then goes through the same `verifyAndCapture` path as Razorpay before the payment is marked paid. "Simulate failure" exercises the failure path and releases the slot hold. **No money moves.** The simulate endpoint is rejected unless `DEMO_MODE=true`. |
 | Webhook | Razorpay → `POST /api/payments/webhook` | Same endpoint and HMAC verification; exercised by the automated tests with a test secret |
@@ -271,11 +271,10 @@ All seeded people, sessions, notes, payments and messages are fictional sample d
 
 | Role | Email | Notes |
 | --- | --- | --- |
-| Therapist | `arpit.shukla@unfazed.demo` | Arpit Shukla (default demo therapist), **Professional** plan, rich data, public page `/arpit-shukla` |
-| Therapist | `dr.iyer@unfazed.demo` | **Starter** plan at the 5-client cap: use it to see upgrade prompts and locked features |
+| Therapist | `arpit@unfazed.demo` | Arpit Shukla, the only demo therapist: **Professional** plan, rich data, public page `/arpit-shukla` |
 | Client | `aarav@client.demo` | Arpit Shukla's client: sessions, package credits, shared + private notes, chat |
 | Client | `priya@client.demo` | Arpit Shukla's client (used-up 3-session package) |
-| Client | `kavya@client.demo` | Client of Dr. Iyer |
+| Client | `kavya@client.demo` | Arpit Shukla's client (student, recent sessions) |
 
 Therapists sign in at `/login`; clients sign in at `/portal/login`.
 
@@ -283,7 +282,7 @@ Therapists sign in at `/login`; clients sign in at `/portal/login`.
 1. Log in as Arpit Shukla → Dashboard, Schedule, Clients → open Aarav → Notes (note the private vs shared toggle).
 2. In another browser profile, log in as Aarav → Shared notes (only shared notes appear), then book a session next week → pay with the demo gateway → the invoice appears under Payments and Arpit Shukla gets a live notification.
 3. Chat between the two windows in real time.
-4. Log in as Dr. Iyer → Add client is blocked at 5/5, Packages and Advanced analytics are locked. Switch plan in Settings → Plan and the features unlock.
+4. As Arpit Shukla, switch to the **Starter** plan in Settings → Plan: Add client is blocked by the 5-client cap, Packages, SOAP templates, the intake builder and Advanced analytics show upgrade prompts. Switch to **Practice+** to unlock Advanced analytics, then back to Professional (plan changes are simulated, nothing is charged; existing clients and data are kept).
 
 ---
 

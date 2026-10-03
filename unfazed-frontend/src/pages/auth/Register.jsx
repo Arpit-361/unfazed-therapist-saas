@@ -39,7 +39,7 @@ export default function Register() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {errors.root && <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{errors.root.message}</div>}
         <Field label="Full name" error={errors.name?.message} required>
-          <Input placeholder="Dr. Priya Menon" {...register('name', { required: 'Name is required', minLength: { value: 2, message: 'Name is too short' } })} />
+          <Input placeholder="Your full name" {...register('name', { required: 'Name is required', minLength: { value: 2, message: 'Name is too short' } })} />
         </Field>
         <Field label="Email" error={errors.email?.message} required>
           <Input type="email" autoComplete="email" {...register('email', { required: 'Email is required' })} />
@@ -60,7 +60,7 @@ export default function Register() {
             <span className="pl-3.5 text-sm text-slate-400">unfazed.in/</span>
             <input
               className="w-full rounded-r-xl border-0 bg-transparent py-2.5 pl-1 pr-3 text-sm outline-none"
-              placeholder="dr-priya"
+              placeholder="your-name"
               {...register('slug', {
                 pattern: { value: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: 'Lowercase letters, numbers and hyphens only' },
                 minLength: { value: 3, message: 'At least 3 characters' },

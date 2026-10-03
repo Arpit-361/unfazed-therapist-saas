@@ -55,7 +55,7 @@ export default function ClientLogin() {
       <DemoCredentials
         accounts={[
           { label: 'Aarav Mehta · client of Arpit Shukla', email: 'aarav@client.demo' },
-          { label: 'Kavya Menon · client of Dr. Iyer', email: 'kavya@client.demo' },
+          { label: 'Kavya Menon · client of Arpit Shukla', email: 'kavya@client.demo' },
         ]}
         onPick={(a) => {
           setValue('email', a.email);

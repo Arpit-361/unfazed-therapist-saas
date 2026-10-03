@@ -56,16 +56,36 @@ before(async () => {
   await new Promise((resolve) => server.listen(0, resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}`;
 
-  const arpit = await login('arpit.shukla@unfazed.demo');
-  const iyer = await login('dr.iyer@unfazed.demo');
+  const arpit = await login('arpit@unfazed.demo');
   const aarav = await login('aarav@client.demo', 'client');
   const kavya = await login('kavya@client.demo', 'client');
   tokens.arpit = arpit.token;
-  tokens.iyer = iyer.token;
   tokens.aarav = aarav.token;
   tokens.kavya = kavya.token;
   ids.aarav = aarav.user.id;
   ids.kavya = kavya.user.id;
+
+  // Throwaway second practice on the default Starter plan, used for isolation and plan-gate checks.
+  const fixture = await api('POST', '/api/auth/register', {
+    body: { name: 'Fixture Practice', email: 'fixture.practice@test.local', password: 'Password1' },
+  });
+  assert.equal(fixture.status, 201);
+  tokens.fixture = fixture.body.token;
+  const langs = await api('PUT', '/api/therapists/me', { token: tokens.fixture, body: { languages: ['Tamil'] } });
+  assert.equal(langs.status, 200, JSON.stringify(langs.body));
+  for (let i = 1; i <= 5; i += 1) {
+    const created = await api('POST', '/api/clients', {
+      token: tokens.fixture,
+      body: { name: `Fixture Client ${i}`, email: `fixture.client${i}@test.local` },
+    });
+    assert.equal(created.status, 201, JSON.stringify(created.body));
+    if (i === 1) {
+      const inviteToken = created.body.invite_url.split('/').pop();
+      const accepted = await api('POST', `/api/auth/invite/${inviteToken}/accept`, { body: { password: 'Password1' } });
+      tokens.fixtureClient = accepted.body.token;
+      ids.fixtureClient = created.body.client.id;
+    }
+  }
 });
 
 after(async () => {
@@ -85,8 +105,8 @@ test('registration validates input and creates unique slugs', async () => {
   const bad = await api('POST', '/api/auth/register', { body: { name: 'A', email: 'nope', password: '123' } });
   assert.equal(bad.status, 400);
 
-  const a = await api('POST', '/api/auth/register', { body: { name: 'Dr. Test Person', email: 'test1@x.demo', password: 'Password1' } });
-  const b = await api('POST', '/api/auth/register', { body: { name: 'Dr. Test Person', email: 'test2@x.demo', password: 'Password1' } });
+  const a = await api('POST', '/api/auth/register', { body: { name: 'Test Person', email: 'test1@x.demo', password: 'Password1' } });
+  const b = await api('POST', '/api/auth/register', { body: { name: 'Test Person', email: 'test2@x.demo', password: 'Password1' } });
   assert.equal(a.status, 201);
   assert.equal(b.status, 201);
   assert.notEqual(a.body.user.slug, b.body.user.slug);
@@ -145,23 +165,27 @@ test('therapist and client roles are strictly separated', async () => {
 });
 
 test('therapist data is isolated between therapists', async () => {
-  const foreignClient = await api('GET', `/api/clients/${ids.aarav}`, { token: tokens.iyer });
+  const foreignClient = await api('GET', `/api/clients/${ids.aarav}`, { token: tokens.fixture });
   assert.equal(foreignClient.status, 404);
 
-  const foreignNotes = await api('GET', `/api/notes?client_id=${ids.aarav}`, { token: tokens.iyer });
+  const foreignNotes = await api('GET', `/api/notes?client_id=${ids.aarav}`, { token: tokens.fixture });
   assert.equal(foreignNotes.body.notes.length, 0);
 
   const foreignNoteCreate = await api('POST', '/api/notes', {
-    token: tokens.iyer,
+    token: tokens.fixture,
     body: { client_id: ids.aarav, type: 'private', content: 'x' },
   });
   assert.equal(foreignNoteCreate.status, 404);
 
-  const foreignChat = await api('GET', `/api/chat/conversations/${ids.aarav}/messages`, { token: tokens.iyer });
+  const foreignChat = await api('GET', `/api/chat/conversations/${ids.aarav}/messages`, { token: tokens.fixture });
   assert.equal(foreignChat.status, 404);
 
-  const list = await api('GET', '/api/clients', { token: tokens.iyer });
+  const list = await api('GET', '/api/clients', { token: tokens.fixture });
+  assert.equal(list.body.clients.length, 5);
   assert.ok(list.body.clients.every((c) => c.id !== ids.aarav));
+
+  const arpitList = await api('GET', '/api/clients', { token: tokens.arpit });
+  assert.ok(arpitList.body.clients.every((c) => c.id !== ids.fixtureClient));
 
   const kavyaSessions = await api('GET', '/api/portal/sessions', { token: tokens.kavya });
   assert.ok(kavyaSessions.body.sessions.every((s) => s.client_id === ids.kavya));
@@ -169,14 +193,14 @@ test('therapist data is isolated between therapists', async () => {
 
 test('entitlements: active-client cap, note templates, packages and analytics depth', async () => {
   // Free tier: 5 active clients => cap reached
-  const cap = await api('POST', '/api/clients', { token: tokens.iyer, body: { name: 'New Person', email: 'new@client.demo' } });
+  const cap = await api('POST', '/api/clients', { token: tokens.fixture, body: { name: 'New Person', email: 'new@client.demo' } });
   assert.equal(cap.status, 403);
   assert.equal(cap.body.code, 'UPGRADE_REQUIRED');
   assert.equal(cap.body.details.upgradeTo.key, 'pro');
 
   const soapFree = await api('POST', '/api/notes', {
-    token: tokens.iyer,
-    body: { client_id: ids.kavya, type: 'private', format: 'soap', structured: { subjective: 'x' } },
+    token: tokens.fixture,
+    body: { client_id: ids.fixtureClient, type: 'private', format: 'soap', structured: { subjective: 'x' } },
   });
   assert.equal(soapFree.status, 403);
   assert.equal(soapFree.body.code, 'UPGRADE_REQUIRED');
@@ -188,7 +212,7 @@ test('entitlements: active-client cap, note templates, packages and analytics de
   assert.equal(soapPro.status, 201);
 
   const pkgFree = await api('POST', '/api/payments/packages', {
-    token: tokens.iyer,
+    token: tokens.fixture,
     body: { name: 'Pack', session_count: 3, per_session_rate: 100000, duration_minutes: 60, validity_days: 30 },
   });
   assert.equal(pkgFree.status, 403);
@@ -201,12 +225,12 @@ test('entitlements: active-client cap, note templates, packages and analytics de
   assert.ok(overview.body.revenue_trend.some((m) => m.gross > 0));
 
   // Upgrading flips access everywhere through the same service
-  const upgrade = await api('POST', '/api/entitlements/change-tier', { token: tokens.iyer, body: { tier: 'premium' } });
+  const upgrade = await api('POST', '/api/entitlements/change-tier', { token: tokens.fixture, body: { tier: 'premium' } });
   assert.equal(upgrade.status, 200);
-  const adv = await api('GET', '/api/analytics/advanced', { token: tokens.iyer });
+  const adv = await api('GET', '/api/analytics/advanced', { token: tokens.fixture });
   assert.equal(adv.status, 200);
   assert.equal(adv.body.revenue_by_purpose.length, 12);
-  await api('POST', '/api/entitlements/change-tier', { token: tokens.iyer, body: { tier: 'free' } });
+  await api('POST', '/api/entitlements/change-tier', { token: tokens.fixture, body: { tier: 'free' } });
 });
 
 test('intake form builder: gated by plan, validated, exposed as JSON schema', async () => {
@@ -214,12 +238,17 @@ test('intake form builder: gated by plan, validated, exposed as JSON schema', as
     { label: 'Preferred session time', type: 'select', required: true, options: ['Morning', 'Evening'] },
     { label: 'Anything else we should know?', type: 'long_text' },
   ];
-  const free = await api('PUT', '/api/therapists/me/intake-form', { token: tokens.iyer, body: { fields } });
+  const free = await api('PUT', '/api/therapists/me/intake-form', { token: tokens.fixture, body: { fields } });
   assert.equal(free.status, 403);
   assert.equal(free.body.code, 'UPGRADE_REQUIRED');
 
-  // Free-plan clients never see custom questions, even if some were stored earlier
-  assert.deepEqual((await api('GET', '/api/portal/me', { token: tokens.kavya })).body.intake_fields, []);
+  // Free-plan clients never see custom questions, even if some were stored while on a paid plan
+  await api('POST', '/api/entitlements/change-tier', { token: tokens.fixture, body: { tier: 'pro' } });
+  const savedOnPro = await api('PUT', '/api/therapists/me/intake-form', { token: tokens.fixture, body: { fields } });
+  assert.equal(savedOnPro.status, 200);
+  assert.equal((await api('GET', '/api/portal/me', { token: tokens.fixtureClient })).body.intake_fields.length, 2);
+  await api('POST', '/api/entitlements/change-tier', { token: tokens.fixture, body: { tier: 'free' } });
+  assert.deepEqual((await api('GET', '/api/portal/me', { token: tokens.fixtureClient })).body.intake_fields, []);
 
   const current = await api('GET', '/api/therapists/me/intake-form', { token: tokens.arpit });
   assert.equal(current.status, 200);
@@ -441,10 +470,10 @@ test('leads: public enquiry, distribution and conversion respect entitlements', 
   assert.equal(converted.status, 200);
   assert.equal(converted.body.lead.status, 'converted');
 
-  const iyerLeads = await api('GET', '/api/leads', { token: tokens.iyer });
-  const tamilLead = iyerLeads.body.leads.find((l) => l.email === 'dir@lead.demo');
-  assert.ok(tamilLead, 'Tamil-speaking directory lead should route to Dr. Iyer');
-  const blocked = await api('POST', `/api/leads/${tamilLead.id}/convert`, { token: tokens.iyer });
+  const fixtureLeads = await api('GET', '/api/leads', { token: tokens.fixture });
+  const tamilLead = fixtureLeads.body.leads.find((l) => l.email === 'dir@lead.demo');
+  assert.ok(tamilLead, 'Tamil-speaking directory lead should route to the only Tamil-speaking practice');
+  const blocked = await api('POST', `/api/leads/${tamilLead.id}/convert`, { token: tokens.fixture });
   assert.equal(blocked.status, 403);
 });
 
