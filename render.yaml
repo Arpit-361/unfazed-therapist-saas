@@ -1,0 +1,38 @@
+# Render Blueprint for the Unfazed API (frontend deploys to Vercel from unfazed-frontend/).
+# Values marked sync: false are entered in the Render dashboard; secrets never live in git.
+services:
+  - type: web
+    name: unfazed-api
+    runtime: node
+    rootDir: unfazed-backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: DEMO_MODE
+        value: "false"
+      # Seeds the demo accounts only when the database has no therapists yet.
+      - key: SEED_ON_START
+        value: "true"
+      - key: CLIENT_URL
+        sync: false
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false

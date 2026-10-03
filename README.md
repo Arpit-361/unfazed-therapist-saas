@@ -19,6 +19,7 @@ The whole app runs locally **without any external credentials** using `DEMO_MODE
 - [API overview](#api-overview)
 - [Real-time events](#real-time-events)
 - [Testing and quality checks](#testing-and-quality-checks)
+- [Deployment](#deployment)
 - [Known limitations](#known-limitations)
 - [Future enhancements](#future-enhancements)
 
@@ -43,6 +44,7 @@ The whole app runs locally **without any external credentials** using `DEMO_MODE
 - Client list with search, status/tag filters, sorting, and active-client capacity tied to the plan.
 - Client detail with intake answers, versioned consent audit (timestamp + version), sessions, payments, notes and packages.
 - Clients are invited by email with a single-use token; the client portal blocks booking until intake and consent are complete.
+- **Custom intake form builder** (Professional plan and up): therapists add their own questions (short answer, paragraph, number, date, dropdown, yes/no), reorder them by drag-and-drop and preview the client view live. The form is exposed as a JSON Schema; client answers are validated on the server and stored with the question text captured at submission time, so later edits to the form never change past answers.
 
 **4. Payments, packages and invoices**
 - Razorpay Orders + Checkout (test mode) with **server-side signature verification** and an HMAC-verified **webhook** (`payment.captured` / `payment.failed`) checked against the raw request body.
@@ -67,7 +69,7 @@ The whole app runs locally **without any external credentials** using `DEMO_MODE
 | Plan | Monthly | Platform fee | Active clients | Adds |
 | --- | --- | --- | --- | --- |
 | Starter (`free`) | ₹0 | 5% | 5 | Chat, branded link, freeform notes, basic analytics |
-| Professional (`pro`) | ₹999 | 3% | 50 | SOAP/DAP templates, packages, waitlist |
+| Professional (`pro`) | ₹999 | 3% | 50 | SOAP/DAP templates, packages, waitlist, custom intake questions |
 | Practice+ (`premium`) | ₹2,499 | 2% | Unlimited | Advanced analytics |
 
 **8. Analytics**
@@ -137,7 +139,7 @@ Unfazed/
 │       │                         # analytics, chat, leads, entitlements, notifications, portal
 │       ├── middleware/           # authMiddleware, entitlementMiddleware, validate, errorHandler
 │       ├── services/             # booking, slot, payment, paymentGateway, invoice, entitlement, email,
-│       │                         # whatsapp, storage, notification, chat, client, leadDistribution, scheduler
+│       │                         # whatsapp, storage, notification, chat, client, intakeForm, leadDistribution, scheduler
 │       ├── sockets/chatSocket.js
 │       └── utils/                # ApiError, asyncHandler, money, serializers, generateSlug, seed
 └── unfazed-frontend/
@@ -294,7 +296,7 @@ Base URL: `http://localhost:5000/api`. Send `Authorization: Bearer <token>` for 
 | Health | `GET /health` |
 | Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/client/register`, `POST /auth/client/login`, `GET /auth/invite/:token`, `POST /auth/invite/:token/accept`, `GET /auth/me` |
 | Public | `GET /public/therapists/:slug`, `GET /public/therapists/:slug/slots`, `POST /public/therapists/:slug/enquiries`, `POST /public/leads`, `GET /public/payments/config` |
-| Therapist profile | `GET/PUT /therapists/me`, `POST /therapists/me/photo`, `GET /therapists/slug-available` |
+| Therapist profile | `GET/PUT /therapists/me`, `POST /therapists/me/photo`, `GET /therapists/slug-available`, `GET/PUT /therapists/me/intake-form` (custom intake questions + JSON Schema; `PUT` requires Professional) |
 | Clients (CRM) | `GET/POST /clients`, `GET/PUT /clients/:id`, `POST /clients/:id/invite` |
 | Scheduling | `GET/PUT /scheduling/availability`, `POST /scheduling/availability/blocked`, `DELETE /scheduling/availability/blocked/:blockId`, `GET /scheduling/slots`, `GET/POST /scheduling/sessions`, `PATCH /scheduling/sessions/:id/status`, `GET /scheduling/waitlist` |
 | Payments | `GET /payments`, `GET /payments/summary`, `GET/POST /payments/packages`, `PUT /payments/packages/:id`, `GET /payments/client-packages`, `GET /payments/:id/invoice`, `POST /payments/webhook` (Razorpay, HMAC) |
@@ -331,7 +333,7 @@ Socket.io connects with the same JWT (`auth: { token }`).
 ## Testing and quality checks
 
 ```bash
-cd unfazed-backend && npm test        # 15 end-to-end API tests on an in-memory MongoDB
+cd unfazed-backend && npm test        # 16 end-to-end API tests on an in-memory MongoDB
 cd unfazed-frontend && npm run lint   # ESLint (react-hooks, react-refresh)
 cd unfazed-frontend && npm run build  # Production build (route-level code splitting)
 ```
@@ -343,12 +345,26 @@ The API tests cover:
 - double-booking (`409`);
 - timezone slot generation;
 - entitlement blocks and client caps;
-- intake/consent gating;
+- intake/consent gating, including validation of custom intake answers;
+- the intake form builder (plan gate, field validation, JSON Schema output, reordering);
 - demo payments with signature verification and GST invoice PDFs;
 - package purchase and credit use;
 - webhook signature rejection and acceptance;
 - lead distribution and conversion;
 - availability validation.
+
+---
+
+## Deployment
+
+The repository includes configuration for the hosts suggested in the specification:
+
+1. **Database – MongoDB Atlas:** create a free cluster and copy its connection string.
+2. **Backend – Render:** create a Blueprint from `render.yaml`, which deploys `unfazed-backend/` with a health check on `/api/health` and a generated `JWT_SECRET`. In the dashboard, set `MONGO_URI`, `CLIENT_URL` (your Vercel URL), `API_PUBLIC_URL` (your Render URL) and, optionally, the Razorpay and SMTP variables. `SEED_ON_START=true` seeds the demo accounts once, on an empty database. Railway works the same way: root directory `unfazed-backend`, start command `npm start`.
+3. **Frontend – Vercel:** import the repository with root directory `unfazed-frontend` and set `VITE_API_BASE_URL=https://<your-api>/api`. `vercel.json` rewrites all paths to `index.html` so branded links like `/arpit-shukla` load directly.
+4. **Razorpay webhook:** point it at `https://<your-api>/api/payments/webhook` with the same secret as `RAZORPAY_WEBHOOK_SECRET`.
+
+To host a credential-free demo instead, set `DEMO_MODE=true` and leave `MONGO_URI` empty. The in-memory database resets on every restart or redeploy.
 
 ---
 
