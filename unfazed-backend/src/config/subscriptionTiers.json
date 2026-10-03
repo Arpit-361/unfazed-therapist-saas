@@ -1,0 +1,44 @@
+[
+  {
+    "key": "free",
+    "name": "Starter",
+    "description": "Everything you need to start a solo practice.",
+    "monthly_price": 0,
+    "platform_fee_percent": 5,
+    "sort_order": 1,
+    "is_default": true,
+    "limits": { "max_active_clients": 5 },
+    "features": ["communication.chat"],
+    "highlights": ["Up to 5 active clients", "Branded booking link", "Freeform notes", "Basic analytics"]
+  },
+  {
+    "key": "pro",
+    "name": "Professional",
+    "description": "For growing practices that want packages and structured notes.",
+    "monthly_price": 99900,
+    "platform_fee_percent": 3,
+    "sort_order": 2,
+    "is_default": false,
+    "limits": { "max_active_clients": 50 },
+    "features": ["communication.chat", "notes.templates", "payments.packages", "scheduling.waitlist"],
+    "highlights": ["Up to 50 active clients", "SOAP & DAP note templates", "Session packages", "Waitlist"]
+  },
+  {
+    "key": "premium",
+    "name": "Practice+",
+    "description": "Unlimited clients and deep business analytics.",
+    "monthly_price": 249900,
+    "platform_fee_percent": 2,
+    "sort_order": 3,
+    "is_default": false,
+    "limits": { "max_active_clients": null },
+    "features": [
+      "communication.chat",
+      "notes.templates",
+      "payments.packages",
+      "scheduling.waitlist",
+      "analytics.advanced"
+    ],
+    "highlights": ["Unlimited active clients", "Advanced analytics", "Everything in Professional", "Lowest platform fee"]
+  }
+]
