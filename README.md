@@ -63,7 +63,7 @@ The whole app runs locally **without any external credentials** using `DEMO_MODE
 
 **7. Entitlements and plans**
 - A single `entitlementService.canAccess(therapistId, featureKey)` backs every gated route (`requireFeature` middleware) and the frontend `useEntitlement` hook. No route or component checks tier names.
-- Plans live in the `SubscriptionTierConfig` collection, seeded from `src/config/subscriptionTiers.json`: prices, platform fees, client caps and feature flags are all configuration.
+- Plans live in the `SubscriptionTierConfig` collection, seeded from `src/config/subscriptionTiers.json`: prices, platform fees, client caps and feature flags are all configuration. On an existing database, startup only adds what is missing (new tiers, and newly shipped feature keys on the tiers that list them in the file); values already stored in the collection are never overwritten.
 - Blocked actions return `403` with `code: "UPGRADE_REQUIRED"`, and the UI shows an upgrade prompt.
 
 | Plan | Monthly | Platform fee | Active clients | Adds |
@@ -332,18 +332,19 @@ Socket.io connects with the same JWT (`auth: { token }`).
 ## Testing and quality checks
 
 ```bash
-cd unfazed-backend && npm test        # 16 end-to-end API tests on an in-memory MongoDB
+cd unfazed-backend && npm test        # 17 end-to-end API tests on an in-memory MongoDB
 cd unfazed-frontend && npm run lint   # ESLint (react-hooks, react-refresh)
 cd unfazed-frontend && npm run build  # Production build (route-level code splitting)
 ```
 
 The API tests cover:
 - authentication and role separation;
-- therapist data isolation;
+- therapist data isolation (against a second practice registered at test time, so the seed keeps a single demo therapist);
 - **private notes never reaching clients**;
 - double-booking (`409`);
 - timezone slot generation;
 - entitlement blocks and client caps;
+- tier-config sync adding new feature flags without overwriting stored values;
 - intake/consent gating, including validation of custom intake answers;
 - the intake form builder (plan gate, field validation, JSON Schema output, reordering);
 - demo payments with signature verification and GST invoice PDFs;

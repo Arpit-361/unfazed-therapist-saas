@@ -233,6 +233,27 @@ test('entitlements: active-client cap, note templates, packages and analytics de
   await api('POST', '/api/entitlements/change-tier', { token: tokens.fixture, body: { tier: 'free' } });
 });
 
+test('tier sync adds newly shipped feature flags without overwriting stored tier config', async () => {
+  const SubscriptionTierConfig = mongoose.model('SubscriptionTierConfig');
+  await SubscriptionTierConfig.updateMany({}, { $pull: { features: 'intake.custom_form' } });
+  await SubscriptionTierConfig.updateOne({ key: 'pro' }, { $set: { platform_fee_percent: 4 } });
+
+  await entitlementService.ensureTierConfigs();
+  const tiers = await SubscriptionTierConfig.find().lean();
+  const byKey = Object.fromEntries(tiers.map((t) => [t.key, t]));
+  assert.ok(byKey.pro.features.includes('intake.custom_form'));
+  assert.ok(byKey.premium.features.includes('intake.custom_form'));
+  assert.ok(!byKey.free.features.includes('intake.custom_form'));
+  assert.equal(byKey.pro.platform_fee_percent, 4, 'stored values must not be reset from the config file');
+
+  await entitlementService.ensureTierConfigs();
+  const again = await SubscriptionTierConfig.findOne({ key: 'pro' }).lean();
+  assert.equal(again.features.filter((f) => f === 'intake.custom_form').length, 1);
+
+  await SubscriptionTierConfig.updateOne({ key: 'pro' }, { $set: { platform_fee_percent: 3 } });
+  entitlementService.invalidateCache();
+});
+
 test('intake form builder: gated by plan, validated, exposed as JSON schema', async () => {
   const fields = [
     { label: 'Preferred session time', type: 'select', required: true, options: ['Morning', 'Evening'] },

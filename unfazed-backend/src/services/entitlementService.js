@@ -43,11 +43,36 @@ const LIMIT_FEATURES = {
 const CACHE_TTL_MS = 30 * 1000;
 let tierCache = { loadedAt: 0, tiers: [] };
 
+/**
+ * Seeds tiers into an empty collection. On an existing database it only adds what is missing:
+ * tiers whose key is absent, and feature keys that no stored tier lists yet (features shipped after
+ * the database was seeded), granted to the tiers that list them in the config file. Stored prices,
+ * caps and flags are never overwritten, so the collection stays the source of truth.
+ */
 async function ensureTierConfigs() {
-  const count = await SubscriptionTierConfig.estimatedDocumentCount();
-  if (count === 0) {
+  const existing = await SubscriptionTierConfig.find().select('key features').lean();
+  if (!existing.length) {
     await SubscriptionTierConfig.insertMany(defaultTiers);
     console.log(`[entitlements] Seeded ${defaultTiers.length} subscription tiers from config`);
+    invalidateCache();
+    return;
+  }
+
+  const storedKeys = new Set(existing.map((t) => t.key));
+  const missingTiers = defaultTiers.filter((t) => !storedKeys.has(t.key));
+  if (missingTiers.length) {
+    await SubscriptionTierConfig.insertMany(missingTiers);
+    console.log(`[entitlements] Added missing tiers: ${missingTiers.map((t) => t.key).join(', ')}`);
+  }
+
+  const knownFeatures = new Set(existing.flatMap((t) => t.features || []));
+  const newFeatures = Object.values(FEATURES).filter((k) => !LIMIT_FEATURES[k] && !knownFeatures.has(k));
+  for (const tier of defaultTiers) {
+    const grant = (tier.features || []).filter((k) => newFeatures.includes(k));
+    if (grant.length && storedKeys.has(tier.key)) {
+      await SubscriptionTierConfig.updateOne({ key: tier.key }, { $addToSet: { features: { $each: grant } } });
+      console.log(`[entitlements] Granted new features to ${tier.key}: ${grant.join(', ')}`);
+    }
   }
   invalidateCache();
 }
