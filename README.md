@@ -358,7 +358,6 @@ The API tests cover:
 - S3 storage requires installing the optional `@aws-sdk/client-s3` package; without it the server falls back to local storage.
 - Video sessions are out of scope: sessions are booked online, but the video call happens on the therapist's own platform.
 - The scheduler runs in-process; a multi-instance deployment would need a shared job queue and a Socket.io adapter (e.g. Redis).
-- `npm audit` reports advisories in transitive dependencies of `mongodb-memory-server`, which is only used for demo mode and tests.
 
 ---
 
