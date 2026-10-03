@@ -54,7 +54,7 @@ export default function ClientLogin() {
       </p>
       <DemoCredentials
         accounts={[
-          { label: 'Aarav Mehta · client of Dr. Sharma', email: 'aarav@client.demo' },
+          { label: 'Aarav Mehta · client of Arpit Shukla', email: 'aarav@client.demo' },
           { label: 'Kavya Menon · client of Dr. Iyer', email: 'kavya@client.demo' },
         ]}
         onPick={(a) => {

@@ -56,11 +56,11 @@ before(async () => {
   await new Promise((resolve) => server.listen(0, resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}`;
 
-  const sharma = await login('dr.sharma@unfazed.demo');
+  const arpit = await login('arpit.shukla@unfazed.demo');
   const iyer = await login('dr.iyer@unfazed.demo');
   const aarav = await login('aarav@client.demo', 'client');
   const kavya = await login('kavya@client.demo', 'client');
-  tokens.sharma = sharma.token;
+  tokens.arpit = arpit.token;
   tokens.iyer = iyer.token;
   tokens.aarav = aarav.token;
   tokens.kavya = kavya.token;
@@ -100,7 +100,7 @@ test('registration validates input and creates unique slugs', async () => {
 });
 
 test('PRIVATE NOTES are never returned to clients', async () => {
-  const therapistView = await api('GET', `/api/notes?client_id=${ids.aarav}`, { token: tokens.sharma });
+  const therapistView = await api('GET', `/api/notes?client_id=${ids.aarav}`, { token: tokens.arpit });
   assert.equal(therapistView.status, 200);
   const privateTitles = therapistView.body.notes.filter((n) => n.type === 'private').map((n) => n.title);
   assert.ok(privateTitles.length >= 2, 'seed should include private notes');
@@ -115,7 +115,7 @@ test('PRIVATE NOTES are never returned to clients', async () => {
 
   // A brand new private note must not appear either.
   const created = await api('POST', '/api/notes', {
-    token: tokens.sharma,
+    token: tokens.arpit,
     body: { client_id: ids.aarav, type: 'private', format: 'freeform', title: 'TOP SECRET', content: '<p>secret</p>' },
   });
   assert.equal(created.status, 201);
@@ -129,7 +129,7 @@ test('PRIVATE NOTES are never returned to clients', async () => {
 
 test('rich-text notes are sanitized', async () => {
   const res = await api('POST', '/api/notes', {
-    token: tokens.sharma,
+    token: tokens.arpit,
     body: { client_id: ids.aarav, type: 'shared', title: 'xss', content: '<p>hi</p><script>alert(1)</script><img src=x onerror=alert(1)>' },
   });
   assert.equal(res.status, 201);
@@ -139,7 +139,7 @@ test('rich-text notes are sanitized', async () => {
 test('therapist and client roles are strictly separated', async () => {
   assert.equal((await api('GET', '/api/clients', { token: tokens.aarav })).status, 403);
   assert.equal((await api('GET', '/api/analytics/overview', { token: tokens.aarav })).status, 403);
-  assert.equal((await api('GET', '/api/portal/me', { token: tokens.sharma })).status, 403);
+  assert.equal((await api('GET', '/api/portal/me', { token: tokens.arpit })).status, 403);
   assert.equal((await api('GET', '/api/clients')).status, 401);
   assert.equal((await api('GET', '/api/clients', { token: 'garbage' })).status, 401);
 });
@@ -182,7 +182,7 @@ test('entitlements: active-client cap, note templates, packages and analytics de
   assert.equal(soapFree.body.code, 'UPGRADE_REQUIRED');
 
   const soapPro = await api('POST', '/api/notes', {
-    token: tokens.sharma,
+    token: tokens.arpit,
     body: { client_id: ids.aarav, type: 'private', format: 'soap', structured: { subjective: 'x' } },
   });
   assert.equal(soapPro.status, 201);
@@ -193,8 +193,8 @@ test('entitlements: active-client cap, note templates, packages and analytics de
   });
   assert.equal(pkgFree.status, 403);
 
-  assert.equal((await api('GET', '/api/analytics/advanced', { token: tokens.sharma })).status, 403);
-  const overview = await api('GET', '/api/analytics/overview', { token: tokens.sharma });
+  assert.equal((await api('GET', '/api/analytics/advanced', { token: tokens.arpit })).status, 403);
+  const overview = await api('GET', '/api/analytics/overview', { token: tokens.arpit });
   assert.equal(overview.status, 200);
   assert.equal(overview.body.revenue_trend.length, 6);
   assert.ok(overview.body.stats.active_clients > 0);
@@ -304,7 +304,7 @@ test('package purchase via demo gateway creates client package credits', async (
 
 test('invited clients must complete intake and consent before first session', async () => {
   const created = await api('POST', '/api/clients', {
-    token: tokens.sharma,
+    token: tokens.arpit,
     body: { name: 'Fresh Client', email: 'fresh@client.demo', tags: ['new'] },
   });
   assert.equal(created.status, 201);
@@ -362,7 +362,7 @@ test('razorpay webhook rejects invalid signatures and accepts valid ones', async
 });
 
 test('leads: public enquiry, distribution and conversion respect entitlements', async () => {
-  const enquiry = await api('POST', '/api/public/therapists/dr-sharma/enquiries', {
+  const enquiry = await api('POST', '/api/public/therapists/arpit-shukla/enquiries', {
     body: { name: 'Curious Person', email: 'curious@lead.demo', message: 'Hello' },
   });
   assert.equal(enquiry.status, 201);
@@ -372,10 +372,10 @@ test('leads: public enquiry, distribution and conversion respect entitlements', 
   });
   assert.equal(directory.status, 201);
 
-  const leads = await api('GET', '/api/leads', { token: tokens.sharma });
+  const leads = await api('GET', '/api/leads', { token: tokens.arpit });
   const lead = leads.body.leads.find((l) => l.email === 'curious@lead.demo');
   assert.ok(lead);
-  const converted = await api('POST', `/api/leads/${lead.id}/convert`, { token: tokens.sharma });
+  const converted = await api('POST', `/api/leads/${lead.id}/convert`, { token: tokens.arpit });
   assert.equal(converted.status, 200);
   assert.equal(converted.body.lead.status, 'converted');
 
@@ -388,7 +388,7 @@ test('leads: public enquiry, distribution and conversion respect entitlements', 
 
 test('availability validation rejects overlapping windows', async () => {
   const res = await api('PUT', '/api/scheduling/availability', {
-    token: tokens.sharma,
+    token: tokens.arpit,
     body: {
       weekly: [
         { day_of_week: 1, start: '10:00', end: '12:00' },

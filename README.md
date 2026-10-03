@@ -28,7 +28,7 @@ The whole app runs locally **without any external credentials** using `DEMO_MODE
 
 **1. Therapist profile and branded link**
 - Registration/login (JWT), editable profile (photo upload, bio, specializations, languages, qualifications, timezone, GSTIN, services with durations and prices).
-- Public profile at `/<slug>` (e.g. `/dr-sharma`) with live slug-availability check.
+- Public profile at `/<slug>` (e.g. `/arpit-shukla`) with live slug-availability check.
 - Crawler-friendly share link `<API_PUBLIC_URL>/share/<slug>` that serves Open Graph tags for WhatsApp/LinkedIn previews, then redirects humans to the React profile.
 - Public enquiry form and a directory enquiry endpoint whose leads are routed by `leadDistributionService`.
 
@@ -265,19 +265,21 @@ The UI labels simulated pieces: the checkout modal shows "Demo payment gateway",
 
 All seeded accounts use the password **`Demo@1234`** (configurable via `DEMO_PASSWORD`).
 
+All seeded people, sessions, notes, payments and messages are fictional sample data. The default "Arpit Shukla" profile is a software demonstration of the platform and does not represent a licensed or practising healthcare professional.
+
 | Role | Email | Notes |
 | --- | --- | --- |
-| Therapist | `dr.sharma@unfazed.demo` | Dr. Ananya Sharma, **Professional** plan, rich data, public page `/dr-sharma` |
+| Therapist | `arpit.shukla@unfazed.demo` | Arpit Shukla (default demo therapist), **Professional** plan, rich data, public page `/arpit-shukla` |
 | Therapist | `dr.iyer@unfazed.demo` | **Starter** plan at the 5-client cap: use it to see upgrade prompts and locked features |
-| Client | `aarav@client.demo` | Dr. Sharma's client: sessions, package credits, shared + private notes, chat |
-| Client | `priya@client.demo` | Dr. Sharma's client (used-up 3-session package) |
+| Client | `aarav@client.demo` | Arpit Shukla's client: sessions, package credits, shared + private notes, chat |
+| Client | `priya@client.demo` | Arpit Shukla's client (used-up 3-session package) |
 | Client | `kavya@client.demo` | Client of Dr. Iyer |
 
 Therapists sign in at `/login`; clients sign in at `/portal/login`.
 
 **Suggested demo walkthrough**
-1. Log in as Dr. Sharma → Dashboard, Schedule, Clients → open Aarav → Notes (note the private vs shared toggle).
-2. In another browser profile, log in as Aarav → Shared notes (only shared notes appear), then book a session next week → pay with the demo gateway → the invoice appears under Payments and Dr. Sharma gets a live notification.
+1. Log in as Arpit Shukla → Dashboard, Schedule, Clients → open Aarav → Notes (note the private vs shared toggle).
+2. In another browser profile, log in as Aarav → Shared notes (only shared notes appear), then book a session next week → pay with the demo gateway → the invoice appears under Payments and Arpit Shukla gets a live notification.
 3. Chat between the two windows in real time.
 4. Log in as Dr. Iyer → Add client is blocked at 5/5, Packages and Advanced analytics are locked. Switch plan in Settings → Plan and the features unlock.
 

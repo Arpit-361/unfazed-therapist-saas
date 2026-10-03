@@ -11,7 +11,7 @@ export default function Hero({ therapist, onBook, onEnquire }) {
         <Avatar name={therapist.name} src={therapist.photo_url} size="xl" className="ring-4 ring-white/30" />
         <div className="flex-1 text-center md:text-left">
           <p className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium">
-            <BadgeCheck className="h-3.5 w-3.5" /> Verified on Unfazed
+            <BadgeCheck className="h-3.5 w-3.5" /> Book online with Unfazed
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{therapist.name}</h1>
           <p className="mt-1 text-lg text-brand-100">{therapist.title}</p>

@@ -37,8 +37,8 @@ export default function Landing() {
             <Button to="/register" size="lg" icon={ArrowRight}>
               Create your practice
             </Button>
-            <Button to="/dr-sharma" size="lg" variant="secondary">
-              See a live profile
+            <Button to="/arpit-shukla" size="lg" variant="secondary">
+              See the demo profile
             </Button>
           </div>
         </div>

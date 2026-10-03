@@ -90,17 +90,17 @@ async function seedDatabase({ reset = true } = {}) {
   const now = new Date();
 
   // ---------- Therapists ----------
-  const sharma = await Therapist.create({
-    email: 'dr.sharma@unfazed.demo',
+  const arpit = await Therapist.create({
+    email: 'arpit.shukla@unfazed.demo',
     password_hash: passwordHash,
-    name: 'Dr. Ananya Sharma',
-    slug: 'dr-sharma',
-    title: 'Clinical Psychologist (RCI Licensed)',
-    bio: 'I help adults navigate anxiety, burnout, relationship challenges and life transitions. My approach blends Cognitive Behavioural Therapy (CBT), Acceptance and Commitment Therapy (ACT) and mindfulness, delivered in a warm, non-judgemental space. I have worked with professionals, students and couples across India for over 9 years.',
+    name: 'Arpit Shukla',
+    slug: 'arpit-shukla',
+    title: 'Demo therapist profile',
+    bio: 'Unfazed demo therapist profile showcasing online scheduling, client management, secure notes, payments and practice analytics. All data on this profile is sample data for demonstration purposes.',
     specializations: ['Anxiety', 'Depression', 'Relationships', 'Workplace stress', 'Life transitions'],
     languages: ['English', 'Hindi', 'Marathi'],
-    qualifications: 'M.Phil Clinical Psychology (NIMHANS), RCI Reg. A12345',
-    experience_years: 9,
+    qualifications: '',
+    experience_years: 0,
     city: 'Mumbai',
     phone: '+919800000001',
     gstin: '27ABCDE1234F1Z5',
@@ -132,7 +132,7 @@ async function seedDatabase({ reset = true } = {}) {
 
   await Availability.create([
     {
-      therapist_id: sharma._id,
+      therapist_id: arpit._id,
       timezone: TZ,
       weekly: [
         ...[1, 2, 3, 4, 5].flatMap((d) => [
@@ -162,13 +162,13 @@ async function seedDatabase({ reset = true } = {}) {
 
   // ---------- Packages ----------
   const [pkg3, pkg6] = await Package.create([
-    { therapist_id: sharma._id, name: 'Starter Pack', description: 'Three sessions to get started.', session_count: 3, per_session_rate: toPaise(1700), duration_minutes: 60, validity_days: 60 },
-    { therapist_id: sharma._id, name: 'Growth Pack', description: 'Six sessions for steady progress.', session_count: 6, per_session_rate: toPaise(1600), duration_minutes: 60, validity_days: 120 },
-    { therapist_id: sharma._id, name: 'Commitment Pack', description: 'Twelve sessions at the best rate.', session_count: 12, per_session_rate: toPaise(1500), duration_minutes: 60, validity_days: 240 },
+    { therapist_id: arpit._id, name: 'Starter Pack', description: 'Three sessions to get started.', session_count: 3, per_session_rate: toPaise(1700), duration_minutes: 60, validity_days: 60 },
+    { therapist_id: arpit._id, name: 'Growth Pack', description: 'Six sessions for steady progress.', session_count: 6, per_session_rate: toPaise(1600), duration_minutes: 60, validity_days: 120 },
+    { therapist_id: arpit._id, name: 'Commitment Pack', description: 'Twelve sessions at the best rate.', session_count: 12, per_session_rate: toPaise(1500), duration_minutes: 60, validity_days: 240 },
   ]);
 
   // ---------- Clients ----------
-  const sharmaClientsData = [
+  const arpitClientsData = [
     { name: 'Aarav Mehta', email: 'aarav@client.demo', phone: '+919811111111', tags: ['anxiety', 'work-stress'], password: true, months: 6, concern: 'Constant worry about work performance and trouble sleeping before presentations.', extra: { gender: 'Male', occupation: 'Product manager', city: 'Mumbai' } },
     { name: 'Priya Nair', email: 'priya@client.demo', phone: '+919811111112', tags: ['depression'], password: true, months: 5, concern: 'Low mood and loss of interest in hobbies since moving cities.' },
     { name: 'Kabir Singh', email: 'kabir@client.demo', phone: '+919811111113', tags: ['relationships'], months: 5, concern: 'Frequent conflicts with partner and difficulty communicating.' },
@@ -180,12 +180,12 @@ async function seedDatabase({ reset = true } = {}) {
     { name: 'Vikram Rao', email: 'vikram@client.demo', phone: '+919811111119', tags: ['relationships'], months: 6, status: 'inactive', concern: 'Pre-marital counselling.' },
   ];
 
-  const sharmaClients = [];
-  for (const c of sharmaClientsData) {
+  const arpitClients = [];
+  for (const c of arpitClientsData) {
     const joined = new Date(now.getTime() - c.months * 30 * DAY);
-    sharmaClients.push(
+    arpitClients.push(
       await Client.create({
-        therapist_id: sharma._id,
+        therapist_id: arpit._id,
         name: c.name,
         email: c.email,
         phone: c.phone,
@@ -200,8 +200,8 @@ async function seedDatabase({ reset = true } = {}) {
     );
   }
   // An invited client who has not yet onboarded (no intake/consent yet).
-  sharmaClients.push(
-    await Client.create({ therapist_id: sharma._id, name: 'Neha Kapoor', email: 'neha@client.demo', phone: '+919811111120', status: 'invited', tags: ['new'] })
+  arpitClients.push(
+    await Client.create({ therapist_id: arpit._id, name: 'Neha Kapoor', email: 'neha@client.demo', phone: '+919811111120', status: 'invited', tags: ['new'] })
   );
 
   const iyerClients = [];
@@ -231,7 +231,7 @@ async function seedDatabase({ reset = true } = {}) {
   // ---------- Sessions & payments ----------
   const sessions = [];
   const payments = [];
-  const services = Object.fromEntries(sharma.services.map((s) => [s.duration_minutes, s]));
+  const services = Object.fromEntries(arpit.services.map((s) => [s.duration_minutes, s]));
   const sessionTimes = ['10:00', '11:30', '14:00', '15:30', '17:00'];
   const used = new Set();
 
@@ -292,11 +292,11 @@ async function seedDatabase({ reset = true } = {}) {
   }
 
   // Aarav's 6-session package (2 used in the past + 1 upcoming)
-  const aarav = sharmaClients[0];
+  const aarav = arpitClients[0];
   const pkgPaymentId = new mongoose.Types.ObjectId();
   const pkgPaidAt = new Date(now.getTime() - 21 * DAY);
   const aaravPackage = await ClientPackage.create({
-    therapist_id: sharma._id,
+    therapist_id: arpit._id,
     client_id: aarav._id,
     package_id: pkg6._id,
     payment_id: pkgPaymentId,
@@ -310,7 +310,7 @@ async function seedDatabase({ reset = true } = {}) {
   });
   payments.push({
     _id: pkgPaymentId,
-    therapist_id: sharma._id,
+    therapist_id: arpit._id,
     client_id: aarav._id,
     purpose: 'package',
     package_id: pkg6._id,
@@ -332,8 +332,8 @@ async function seedDatabase({ reset = true } = {}) {
   const priyaPkgPaymentId = new mongoose.Types.ObjectId();
   const priyaPaidAt = new Date(now.getTime() - 70 * DAY);
   await ClientPackage.create({
-    therapist_id: sharma._id,
-    client_id: sharmaClients[1]._id,
+    therapist_id: arpit._id,
+    client_id: arpitClients[1]._id,
     package_id: pkg3._id,
     payment_id: priyaPkgPaymentId,
     name: pkg3.name,
@@ -347,8 +347,8 @@ async function seedDatabase({ reset = true } = {}) {
   });
   payments.push({
     _id: priyaPkgPaymentId,
-    therapist_id: sharma._id,
-    client_id: sharmaClients[1]._id,
+    therapist_id: arpit._id,
+    client_id: arpitClients[1]._id,
     purpose: 'package',
     package_id: pkg3._id,
     description: 'Starter Pack - 3 x 60 min sessions',
@@ -364,15 +364,15 @@ async function seedDatabase({ reset = true } = {}) {
     createdAt: priyaPaidAt,
   });
 
-  // Past sessions over ~6 months for Dr. Sharma
-  const activeSharmaClients = sharmaClients.filter((c) => c.status !== 'invited');
+  // Past sessions over ~6 months for Arpit Shukla
+  const activeArpitClients = arpitClients.filter((c) => c.status !== 'invited');
   for (let daysAgo = 175; daysAgo >= 1; daysAgo -= 1) {
     const dayDate = new Date(now.getTime() - daysAgo * DAY);
     const dow = Number(formatInTimeZone(dayDate, TZ, 'i')) % 7; // ISO 1-7 => 0 = Sunday
     if (dow === 0) continue;
     const count = Math.floor(random() * 3) + (daysAgo < 60 ? 1 : 0);
     for (let i = 0; i < count; i += 1) {
-      const client = activeSharmaClients[Math.floor(random() * activeSharmaClients.length)];
+      const client = activeArpitClients[Math.floor(random() * activeArpitClients.length)];
       const clientAgeDays = (now - client.createdAt) / DAY;
       if (daysAgo > clientAgeDays) continue;
       const time = sessionTimes[Math.floor(random() * (dow === 6 ? 2 : sessionTimes.length))];
@@ -380,7 +380,7 @@ async function seedDatabase({ reset = true } = {}) {
       const status = roll < 0.84 ? 'completed' : roll < 0.93 ? 'no_show' : 'cancelled';
       const service = random() < 0.8 ? services[60] : random() < 0.5 ? services[45] : services[90];
       addSession({
-        therapist: sharma,
+        therapist: arpit,
         client,
         start: istDate(-daysAgo, time),
         service,
@@ -394,11 +394,11 @@ async function seedDatabase({ reset = true } = {}) {
 
   // Aarav: package sessions (past) + upcoming sessions
   [-14, -7].forEach((offset) =>
-    addSession({ therapist: sharma, client: aarav, start: istDate(offset, '18:00'), service: services[60], status: 'completed', buffer: 10, paymentStatus: 'package', packageRef: aaravPackage._id })
+    addSession({ therapist: arpit, client: aarav, start: istDate(offset, '18:00'), service: services[60], status: 'completed', buffer: 10, paymentStatus: 'package', packageRef: aaravPackage._id })
   );
-  const upcomingAarav = addSession({ therapist: sharma, client: aarav, start: istDate(2, '11:30'), service: services[60], status: 'confirmed', buffer: 10, paymentStatus: 'package', packageRef: aaravPackage._id });
+  const upcomingAarav = addSession({ therapist: arpit, client: aarav, start: istDate(2, '11:30'), service: services[60], status: 'confirmed', buffer: 10, paymentStatus: 'package', packageRef: aaravPackage._id });
 
-  // Upcoming week for Dr. Sharma
+  // Upcoming week for Arpit Shukla
   const upcomingPlan = [
     [1, '10:00', 1], [1, '15:30', 2], [3, '14:00', 3], [4, '17:00', 4], [5, '10:00', 5], [6, '15:30', 6],
   ];
@@ -406,7 +406,7 @@ async function seedDatabase({ reset = true } = {}) {
     const start = istDate(offset, time);
     const dow = Number(formatInTimeZone(start, TZ, 'i')) % 7;
     if (dow === 0 || (dow === 6 && time > '13:00')) continue;
-    addSession({ therapist: sharma, client: sharmaClients[idx], start, service: services[60], status: 'confirmed', buffer: 10, paymentStatus: 'paid', feePercent: 3 });
+    addSession({ therapist: arpit, client: arpitClients[idx], start, service: services[60], status: 'confirmed', buffer: 10, paymentStatus: 'paid', feePercent: 3 });
   }
 
   // Dr. Iyer: a handful of sessions
@@ -424,7 +424,7 @@ async function seedDatabase({ reset = true } = {}) {
   const lastAaravSession = sessions.filter((s) => String(s.client_id) === String(aarav._id) && s.status === 'completed').pop();
   await SessionNote.create([
     {
-      therapist_id: sharma._id,
+      therapist_id: arpit._id,
       client_id: aarav._id,
       session_id: lastAaravSession?._id,
       type: 'private',
@@ -438,7 +438,7 @@ async function seedDatabase({ reset = true } = {}) {
       },
     },
     {
-      therapist_id: sharma._id,
+      therapist_id: arpit._id,
       client_id: aarav._id,
       session_id: lastAaravSession?._id,
       type: 'shared',
@@ -448,7 +448,7 @@ async function seedDatabase({ reset = true } = {}) {
         '<p>Great work this week, Aarav! Here is what we agreed to practise:</p><ul><li><strong>Box breathing</strong> - 4 rounds before each meeting.</li><li>Fill the <em>thought record</em> whenever you notice "I will mess this up".</li><li>Wind-down routine: screens off by 11 pm.</li></ul><p>See you next session.</p>',
     },
     {
-      therapist_id: sharma._id,
+      therapist_id: arpit._id,
       client_id: aarav._id,
       type: 'private',
       format: 'freeform',
@@ -456,8 +456,8 @@ async function seedDatabase({ reset = true } = {}) {
       content: '<p>No current suicidal ideation. Protective factors: supportive sister, regular exercise. Re-screen monthly.</p>',
     },
     {
-      therapist_id: sharma._id,
-      client_id: sharmaClients[1]._id,
+      therapist_id: arpit._id,
+      client_id: arpitClients[1]._id,
       type: 'private',
       format: 'dap',
       title: 'Session notes',
@@ -468,8 +468,8 @@ async function seedDatabase({ reset = true } = {}) {
       },
     },
     {
-      therapist_id: sharma._id,
-      client_id: sharmaClients[1]._id,
+      therapist_id: arpit._id,
+      client_id: arpitClients[1]._id,
       type: 'shared',
       format: 'freeform',
       title: 'Activities to try',
@@ -479,14 +479,14 @@ async function seedDatabase({ reset = true } = {}) {
 
   // ---------- Chat ----------
   const chat = [
-    ['client', 'Hi Dr. Sharma, can I share my thought record before our next session?', 50],
+    ['client', 'Hi Arpit, can I share my thought record before our next session?', 50],
     ['therapist', 'Of course, Aarav. Bring it along and we will go through it together.', 48],
     ['client', 'Thanks! The breathing exercise really helped before my presentation today.', 26],
     ['therapist', "That's wonderful to hear - well done for practising it!", 25],
   ];
   await Message.insertMany(
     chat.map(([role, body, hoursAgo]) => ({
-      therapist_id: sharma._id,
+      therapist_id: arpit._id,
       client_id: aarav._id,
       sender_role: role,
       body,
@@ -494,27 +494,27 @@ async function seedDatabase({ reset = true } = {}) {
       createdAt: new Date(now.getTime() - hoursAgo * 3600000),
     }))
   );
-  await Message.create({ therapist_id: sharma._id, client_id: sharmaClients[1]._id, sender_role: 'client', body: 'Could we move Thursday to the evening if possible?', createdAt: new Date(now.getTime() - 2 * 3600000) });
+  await Message.create({ therapist_id: arpit._id, client_id: arpitClients[1]._id, sender_role: 'client', body: 'Could we move Thursday to the evening if possible?', createdAt: new Date(now.getTime() - 2 * 3600000) });
 
   // ---------- Leads ----------
   await Lead.create([
-    { therapist_id: sharma._id, name: 'Tanvi Shah', email: 'tanvi@lead.demo', phone: '+919822222221', message: 'Looking for help with anxiety around a career change. Do you offer evening sessions?', status: 'new' },
-    { therapist_id: sharma._id, name: 'Rohit Malhotra', email: 'rohit@lead.demo', message: 'My partner and I want couples counselling in Hindi.', status: 'contacted', createdAt: new Date(now.getTime() - 3 * DAY) },
-    { therapist_id: sharma._id, name: 'Ayesha Khan', email: 'ayesha@lead.demo', message: 'Interested in sessions for burnout.', status: 'new', source: 'directory', createdAt: new Date(now.getTime() - DAY) },
+    { therapist_id: arpit._id, name: 'Tanvi Shah', email: 'tanvi@lead.demo', phone: '+919822222221', message: 'Looking for help with anxiety around a career change. Do you offer evening sessions?', status: 'new' },
+    { therapist_id: arpit._id, name: 'Rohit Malhotra', email: 'rohit@lead.demo', message: 'My partner and I want couples counselling in Hindi.', status: 'contacted', createdAt: new Date(now.getTime() - 3 * DAY) },
+    { therapist_id: arpit._id, name: 'Ayesha Khan', email: 'ayesha@lead.demo', message: 'Interested in sessions for burnout.', status: 'new', source: 'directory', createdAt: new Date(now.getTime() - DAY) },
     { therapist_id: iyer._id, name: 'Sameer Joshi', email: 'sameer@lead.demo', message: 'Need help with exam stress.', status: 'new' },
   ]);
 
   // ---------- Notifications ----------
   await Notification.create([
-    { recipient_role: 'therapist', recipient_id: sharma._id, therapist_id: sharma._id, type: 'lead.received', title: 'New enquiry', body: 'Tanvi Shah sent an enquiry about evening sessions.', link: '/dashboard/leads', channels: [{ channel: 'in_app', status: 'sent' }] },
-    { recipient_role: 'therapist', recipient_id: sharma._id, therapist_id: sharma._id, type: 'booking.confirmed', title: 'New booking', body: `Aarav Mehta booked Individual Therapy on ${formatInTimeZone(upcomingAarav.start_time, TZ, 'EEE, d MMM h:mm a')}.`, link: '/dashboard/schedule', channels: [{ channel: 'in_app', status: 'sent' }] },
-    { recipient_role: 'client', recipient_id: aarav._id, therapist_id: sharma._id, type: 'booking.confirmed', title: 'Session confirmed', body: `Your session with Dr. Ananya Sharma is confirmed for ${formatInTimeZone(upcomingAarav.start_time, TZ, 'EEE, d MMM h:mm a')}.`, link: '/portal', channels: [{ channel: 'in_app', status: 'sent' }, { channel: 'whatsapp', status: 'queued' }] },
+    { recipient_role: 'therapist', recipient_id: arpit._id, therapist_id: arpit._id, type: 'lead.received', title: 'New enquiry', body: 'Tanvi Shah sent an enquiry about evening sessions.', link: '/dashboard/leads', channels: [{ channel: 'in_app', status: 'sent' }] },
+    { recipient_role: 'therapist', recipient_id: arpit._id, therapist_id: arpit._id, type: 'booking.confirmed', title: 'New booking', body: `Aarav Mehta booked Individual Therapy on ${formatInTimeZone(upcomingAarav.start_time, TZ, 'EEE, d MMM h:mm a')}.`, link: '/dashboard/schedule', channels: [{ channel: 'in_app', status: 'sent' }] },
+    { recipient_role: 'client', recipient_id: aarav._id, therapist_id: arpit._id, type: 'booking.confirmed', title: 'Session confirmed', body: `Your session with Arpit Shukla is confirmed for ${formatInTimeZone(upcomingAarav.start_time, TZ, 'EEE, d MMM h:mm a')}.`, link: '/portal', channels: [{ channel: 'in_app', status: 'sent' }, { channel: 'whatsapp', status: 'queued' }] },
   ]);
 
   console.log(
-    `[seed] Seeded 2 therapists, ${sharmaClients.length + iyerClients.length} clients, ${sessions.length} sessions, ${payments.length} payments. Demo password: ${config.demoPassword}`
+    `[seed] Seeded 2 therapists, ${arpitClients.length + iyerClients.length} clients, ${sessions.length} sessions, ${payments.length} payments. Demo password: ${config.demoPassword}`
   );
-  return { sharma, iyer };
+  return { arpit, iyer };
 }
 
 module.exports = { seedDatabase, clearDatabase };

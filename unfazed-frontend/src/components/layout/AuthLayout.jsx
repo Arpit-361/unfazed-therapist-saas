@@ -52,8 +52,8 @@ export default function AuthLayout({ title, subtitle, children, aside }) {
         <div className="relative flex h-full flex-col justify-end p-12 text-white">
           {aside || (
             <>
-              <p className="text-3xl font-semibold leading-snug">“Unfazed gave me back the hours I used to spend on WhatsApp, spreadsheets and payment follow-ups.”</p>
-              <p className="mt-4 text-brand-100">Clinical psychologist, Mumbai</p>
+              <p className="text-3xl font-semibold leading-snug">Scheduling, payments, notes and client conversations - in one calm place.</p>
+              <p className="mt-4 text-brand-100">Unfazed · practice management for therapists in India</p>
             </>
           )}
         </div>

@@ -52,7 +52,7 @@ export default function Login() {
       </p>
       <DemoCredentials
         accounts={[
-          { label: 'Dr. Ananya Sharma · Professional plan', email: 'dr.sharma@unfazed.demo' },
+          { label: 'Arpit Shukla · Professional plan', email: 'arpit.shukla@unfazed.demo' },
           { label: 'Dr. Rohan Iyer · Starter plan (at client cap)', email: 'dr.iyer@unfazed.demo' },
         ]}
         onPick={(a) => {
