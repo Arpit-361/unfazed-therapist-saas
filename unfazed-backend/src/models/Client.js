@@ -32,6 +32,21 @@ const intakeSchema = new mongoose.Schema(
       family_history: { type: String, default: '' },
     },
     goals: { type: String, default: '' },
+    // Answers to the therapist's custom questions, with the question text captured at submission time.
+    custom_responses: {
+      type: [
+        new mongoose.Schema(
+          {
+            field_id: { type: String, required: true },
+            label: { type: String, required: true },
+            type: { type: String, required: true },
+            value: { type: mongoose.Schema.Types.Mixed, default: null },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
     submitted_at: { type: Date, default: null },
   },
   { _id: false }

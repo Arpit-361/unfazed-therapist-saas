@@ -20,8 +20,8 @@
     "sort_order": 2,
     "is_default": false,
     "limits": { "max_active_clients": 50 },
-    "features": ["communication.chat", "notes.templates", "payments.packages", "scheduling.waitlist"],
-    "highlights": ["Up to 50 active clients", "SOAP & DAP note templates", "Session packages", "Waitlist"]
+    "features": ["communication.chat", "notes.templates", "payments.packages", "scheduling.waitlist", "intake.custom_form"],
+    "highlights": ["Up to 50 active clients", "SOAP & DAP note templates", "Session packages", "Waitlist", "Custom intake questions"]
   },
   {
     "key": "premium",
@@ -37,6 +37,7 @@
       "notes.templates",
       "payments.packages",
       "scheduling.waitlist",
+      "intake.custom_form",
       "analytics.advanced"
     ],
     "highlights": ["Unlimited active clients", "Advanced analytics", "Everything in Professional", "Lowest platform fee"]

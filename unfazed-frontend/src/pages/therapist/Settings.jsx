@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Briefcase, Camera, Check, CheckCircle2, Plug, Plus, Save, Sparkles, Trash2, User, XCircle } from 'lucide-react';
+import { Briefcase, Camera, Check, CheckCircle2, ClipboardList, Plug, Plus, Save, Sparkles, Trash2, User, XCircle } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
 import Avatar from '../../components/common/Avatar';
@@ -15,6 +15,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useEntitlementContext } from '../../context/EntitlementContext';
 import useApi from '../../hooks/useApi';
+import useEntitlement, { FEATURES } from '../../hooks/useEntitlement';
+import LockedFeature from '../../components/entitlements/LockedFeature';
+import IntakeFormBuilder from '../../components/crm/IntakeFormBuilder';
 import { formatINR, timezoneOptions } from '../../utils/format';
 
 const toForm = (t) => ({
@@ -251,6 +254,21 @@ function PlanTab() {
   );
 }
 
+function IntakeTab() {
+  const { allowed, loading } = useEntitlement(FEATURES.INTAKE_FORM_BUILDER);
+  if (loading) return <PageLoader />;
+  if (!allowed) {
+    return (
+      <LockedFeature
+        featureKey={FEATURES.INTAKE_FORM_BUILDER}
+        title="Build your own intake questions"
+        description="Add custom questions (dropdowns, yes/no, dates and more) to the intake form your clients complete before their first session."
+      />
+    );
+  }
+  return <IntakeFormBuilder />;
+}
+
 function IntegrationsTab() {
   const { data, loading, error, reload } = useApi(() => systemApi.health(), []);
   if (loading) return <PageLoader />;
@@ -345,7 +363,7 @@ export default function Settings() {
     <div>
       <PageHeader
         title="Settings"
-        description="Your profile, services and plan."
+        description="Your profile, services, intake form and plan."
         actions={
           editable && (
             <Button icon={Save} loading={saving} onClick={save}>
@@ -360,12 +378,14 @@ export default function Settings() {
         tabs={[
           { value: 'profile', label: 'Profile', icon: User },
           { value: 'services', label: 'Services & pricing', icon: Briefcase },
+          { value: 'intake', label: 'Intake form', icon: ClipboardList },
           { value: 'plan', label: 'Plan', icon: Sparkles },
           { value: 'integrations', label: 'Integrations', icon: Plug },
         ]}
       />
       {tab === 'profile' && <ProfileTab form={form} set={set} therapist={data.therapist} onPhoto={uploadPhoto} />}
       {tab === 'services' && <ServicesTab form={form} set={set} durations={config.data?.session_durations || [30, 45, 60, 90]} />}
+      {tab === 'intake' && <IntakeTab />}
       {tab === 'plan' && <PlanTab />}
       {tab === 'integrations' && <IntegrationsTab />}
     </div>

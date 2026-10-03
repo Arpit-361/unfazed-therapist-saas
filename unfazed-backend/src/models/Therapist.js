@@ -8,6 +8,19 @@ const serviceSchema = new mongoose.Schema({
   price: { type: Number, required: true, min: 0 }, // paise
 });
 
+// Custom intake question definition (see intakeFormService for allowed types and validation).
+const intakeFieldSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    label: { type: String, required: true, trim: true, maxlength: 160 },
+    type: { type: String, required: true },
+    required: { type: Boolean, default: false },
+    help: { type: String, trim: true, maxlength: 240, default: '' },
+    options: [{ type: String, trim: true, maxlength: 80 }],
+  },
+  { _id: false }
+);
+
 const therapistSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -27,6 +40,10 @@ const therapistSchema = new mongoose.Schema(
     gstin: { type: String, trim: true, maxlength: 20, default: '' },
     accepting_clients: { type: Boolean, default: true },
     services: [serviceSchema],
+    intake_form: {
+      fields: { type: [intakeFieldSchema], default: [] },
+      updated_at: { type: Date, default: null },
+    },
     // Read and written exclusively by entitlementService.
     subscription_tier: { type: String, default: null },
     last_lead_assigned_at: { type: Date, default: null },

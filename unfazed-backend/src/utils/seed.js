@@ -55,8 +55,16 @@ const intake = (concern, date, extra = {}) => ({
   presenting_concern: concern,
   history: { previous_therapy: extra.previous || 'None', medications: 'None', medical_conditions: 'None', family_history: '' },
   goals: extra.goals || '',
+  custom_responses: extra.custom_responses || [],
   submitted_at: date,
 });
+
+const DEMO_INTAKE_FIELDS = [
+  { id: 'f_sleep01', label: 'How would you rate your sleep over the last two weeks?', type: 'select', required: true, help: '', options: ['Good', 'Fair', 'Poor'] },
+  { id: 'f_lang01', label: 'Preferred session language', type: 'select', required: false, help: '', options: ['English', 'Hindi', 'Marathi'] },
+  { id: 'f_selfharm01', label: 'Have you had thoughts of harming yourself in the last month?', type: 'yes_no', required: true, help: 'If you are in immediate danger, call 112 or Tele-MANAS at 14416.', options: [] },
+  { id: 'f_referral01', label: 'How did you hear about this practice?', type: 'short_text', required: false, help: '', options: [] },
+];
 
 function breakdown(base, feePercent) {
   const tax = Math.round((base * config.pricing.gstRatePercent) / 100);
@@ -101,6 +109,7 @@ async function seedDatabase({ reset = true } = {}) {
     languages: ['English', 'Hindi', 'Marathi'],
     qualifications: '',
     experience_years: 0,
+    intake_form: { fields: DEMO_INTAKE_FIELDS, updated_at: now },
     city: 'Mumbai',
     phone: '+919800000001',
     gstin: '27ABCDE1234F1Z5',
@@ -169,7 +178,17 @@ async function seedDatabase({ reset = true } = {}) {
 
   // ---------- Clients ----------
   const arpitClientsData = [
-    { name: 'Aarav Mehta', email: 'aarav@client.demo', phone: '+919811111111', tags: ['anxiety', 'work-stress'], password: true, months: 6, concern: 'Constant worry about work performance and trouble sleeping before presentations.', extra: { gender: 'Male', occupation: 'Product manager', city: 'Mumbai' } },
+    { name: 'Aarav Mehta', email: 'aarav@client.demo', phone: '+919811111111', tags: ['anxiety', 'work-stress'], password: true, months: 6, concern: 'Constant worry about work performance and trouble sleeping before presentations.', extra: {
+        gender: 'Male',
+        occupation: 'Product manager',
+        city: 'Mumbai',
+        custom_responses: [
+          { field_id: 'f_sleep01', label: DEMO_INTAKE_FIELDS[0].label, type: 'select', value: 'Poor' },
+          { field_id: 'f_lang01', label: DEMO_INTAKE_FIELDS[1].label, type: 'select', value: 'English' },
+          { field_id: 'f_selfharm01', label: DEMO_INTAKE_FIELDS[2].label, type: 'yes_no', value: false },
+          { field_id: 'f_referral01', label: DEMO_INTAKE_FIELDS[3].label, type: 'short_text', value: 'A colleague shared the booking link' },
+        ],
+      } },
     { name: 'Priya Nair', email: 'priya@client.demo', phone: '+919811111112', tags: ['depression'], password: true, months: 5, concern: 'Low mood and loss of interest in hobbies since moving cities.' },
     { name: 'Kabir Singh', email: 'kabir@client.demo', phone: '+919811111113', tags: ['relationships'], months: 5, concern: 'Frequent conflicts with partner and difficulty communicating.' },
     { name: 'Meera Joshi', email: 'meera@client.demo', phone: '+919811111114', tags: ['anxiety'], months: 4, concern: 'Panic attacks while commuting.' },

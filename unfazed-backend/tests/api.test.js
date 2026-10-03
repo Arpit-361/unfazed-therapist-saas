@@ -209,6 +209,47 @@ test('entitlements: active-client cap, note templates, packages and analytics de
   await api('POST', '/api/entitlements/change-tier', { token: tokens.iyer, body: { tier: 'free' } });
 });
 
+test('intake form builder: gated by plan, validated, exposed as JSON schema', async () => {
+  const fields = [
+    { label: 'Preferred session time', type: 'select', required: true, options: ['Morning', 'Evening'] },
+    { label: 'Anything else we should know?', type: 'long_text' },
+  ];
+  const free = await api('PUT', '/api/therapists/me/intake-form', { token: tokens.iyer, body: { fields } });
+  assert.equal(free.status, 403);
+  assert.equal(free.body.code, 'UPGRADE_REQUIRED');
+
+  // Free-plan clients never see custom questions, even if some were stored earlier
+  assert.deepEqual((await api('GET', '/api/portal/me', { token: tokens.kavya })).body.intake_fields, []);
+
+  const current = await api('GET', '/api/therapists/me/intake-form', { token: tokens.arpit });
+  assert.equal(current.status, 200);
+  assert.equal(current.body.fields.length, 4);
+  assert.deepEqual(current.body.json_schema.required, ['f_sleep01', 'f_selfharm01']);
+  assert.deepEqual(current.body.json_schema.properties.f_sleep01.enum, ['Good', 'Fair', 'Poor']);
+
+  const invalid = await api('PUT', '/api/therapists/me/intake-form', {
+    token: tokens.arpit,
+    body: { fields: [{ label: 'Pick one', type: 'select', options: ['Only'] }] },
+  });
+  assert.equal(invalid.status, 400);
+  const badType = await api('PUT', '/api/therapists/me/intake-form', {
+    token: tokens.arpit,
+    body: { fields: [{ label: 'Upload', type: 'file' }] },
+  });
+  assert.equal(badType.status, 400);
+
+  // Reordering keeps existing ids so stored answers stay linked
+  const reordered = [...current.body.fields].reverse();
+  const saved = await api('PUT', '/api/therapists/me/intake-form', { token: tokens.arpit, body: { fields: reordered } });
+  assert.equal(saved.status, 200);
+  assert.deepEqual(saved.body.json_schema['x-order'], ['f_referral01', 'f_selfharm01', 'f_lang01', 'f_sleep01']);
+  const restored = await api('PUT', '/api/therapists/me/intake-form', { token: tokens.arpit, body: { fields: current.body.fields } });
+  assert.equal(restored.status, 200);
+
+  // Clients cannot edit the form
+  assert.equal((await api('PUT', '/api/therapists/me/intake-form', { token: tokens.aarav, body: { fields } })).status, 403);
+});
+
 async function firstSlots(token) {
   const me = await api('GET', '/api/portal/me', { token });
   const service = me.body.therapist.services.find((s) => s.duration_minutes === 60);
@@ -324,11 +365,32 @@ test('invited clients must complete intake and consent before first session', as
   assert.equal(blocked.status, 400);
   assert.equal(blocked.body.code, 'INTAKE_REQUIRED');
 
+  const me = await api('GET', '/api/portal/me', { token: clientToken });
+  const fieldIds = me.body.intake_fields.map((f) => f.id);
+  assert.deepEqual(fieldIds, ['f_sleep01', 'f_lang01', 'f_selfharm01', 'f_referral01']);
+
+  const intakeBody = { presenting_concern: 'Feeling overwhelmed at work lately.', demographics: { gender: 'Female' } };
+  const missingCustom = await api('PUT', '/api/portal/intake', { token: clientToken, body: intakeBody });
+  assert.equal(missingCustom.status, 400);
+  assert.match(missingCustom.body.message, /sleep/);
+
+  const badOption = await api('PUT', '/api/portal/intake', {
+    token: clientToken,
+    body: { ...intakeBody, custom_answers: { f_sleep01: 'Excellent', f_selfharm01: false } },
+  });
+  assert.equal(badOption.status, 400);
+
   const intake = await api('PUT', '/api/portal/intake', {
     token: clientToken,
-    body: { presenting_concern: 'Feeling overwhelmed at work lately.', demographics: { gender: 'Female' } },
+    body: { ...intakeBody, custom_answers: { f_sleep01: 'Fair', f_selfharm01: 'no', f_referral01: '  Instagram  ', unknown_key: 'ignored' } },
   });
   assert.equal(intake.status, 200);
+  assert.deepEqual(
+    intake.body.client.intake.custom_responses.map((r) => [r.field_id, r.value]),
+    [['f_sleep01', 'Fair'], ['f_selfharm01', false], ['f_referral01', 'Instagram']]
+  );
+  const therapistView = await api('GET', `/api/clients/${created.body.client.id}`, { token: tokens.arpit });
+  assert.equal(therapistView.body.client.intake.custom_responses[0].label, 'How would you rate your sleep over the last two weeks?');
   const noConsent = await api('POST', '/api/portal/sessions', {
     token: clientToken,
     body: { service_id: service.id, start_time: slots[0].start, payment_mode: 'pay_now' },

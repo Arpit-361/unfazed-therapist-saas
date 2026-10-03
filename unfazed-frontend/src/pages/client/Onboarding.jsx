@@ -7,6 +7,7 @@ import Button from '../../components/common/Button';
 import { Field, Input, Select, TextArea } from '../../components/common/Field';
 import { PageLoader } from '../../components/common/Loader';
 import { usePortal } from '../../components/layout/PortalLayout';
+import CustomIntakeFields, { customAnswerDefaults } from '../../components/crm/CustomIntakeFields';
 import { portalApi } from '../../api/endpoints';
 import { useToast } from '../../context/ToastContext';
 import useApi from '../../hooks/useApi';
@@ -32,7 +33,7 @@ function Steps({ step }) {
   );
 }
 
-function IntakeForm({ client, onDone }) {
+function IntakeForm({ client, customFields, onDone }) {
   const toast = useToast();
   const intake = client.intake || {};
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -41,12 +42,13 @@ function IntakeForm({ client, onDone }) {
       presenting_concern: intake.presenting_concern || '',
       history: intake.history || {},
       goals: intake.goals || '',
+      custom_answers: customAnswerDefaults(intake.custom_responses),
     },
   });
 
   const submit = async (values) => {
     try {
-      await portalApi.submitIntake(values);
+      await portalApi.submitIntake({ ...values, custom_answers: values.custom_answers || {} });
       toast.success('Intake saved');
       onDone();
     } catch (err) {
@@ -114,6 +116,13 @@ function IntakeForm({ client, onDone }) {
         </div>
       </div>
 
+      {customFields.length > 0 && (
+        <div className="card space-y-4 p-5 sm:p-6">
+          <h3 className="font-semibold text-slate-900">A few more questions from your therapist</h3>
+          <CustomIntakeFields fields={customFields} register={register} errors={errors} />
+        </div>
+      )}
+
       <div className="flex justify-end">
         <Button type="submit" size="lg" loading={isSubmitting}>
           Save & continue
@@ -175,7 +184,7 @@ function ConsentStep({ client, onDone }) {
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { client, reload } = usePortal();
+  const { client, intake_fields: customFields = [], reload } = usePortal();
   const [step, setStep] = useState(client.intake_completed ? 2 : 1);
 
   return (
@@ -185,6 +194,7 @@ export default function Onboarding() {
       {step === 1 ? (
         <IntakeForm
           client={client}
+          customFields={customFields}
           onDone={async () => {
             await reload();
             setStep(2);

@@ -8,6 +8,7 @@ const entitlementService = require('../services/entitlementService');
 const leadDistributionService = require('../services/leadDistributionService');
 const storageService = require('../services/storageService');
 const slotService = require('../services/slotService');
+const intakeFormService = require('../services/intakeFormService');
 const { validateSlugFormat } = require('../utils/generateSlug');
 const { serializeTherapistPrivate, serializeTherapistPublic, serializePackage } = require('../utils/serializers');
 const asyncHandler = require('../utils/asyncHandler');
@@ -67,6 +68,37 @@ exports.uploadPhoto = asyncHandler(async (req, res) => {
     { returnDocument: 'after' }
   );
   res.json({ success: true, therapist: serializeTherapistPrivate(therapist) });
+});
+
+// ---------- Custom intake form builder ----------
+
+const intakeFormResponse = (therapist) => {
+  const fields = intakeFormService.serializeFields(therapist.intake_form?.fields);
+  return {
+    success: true,
+    fields,
+    json_schema: intakeFormService.toJsonSchema(fields),
+    field_types: intakeFormService.fieldTypes(),
+    max_fields: intakeFormService.MAX_FIELDS,
+    updated_at: therapist.intake_form?.updated_at || null,
+  };
+};
+
+exports.getIntakeForm = asyncHandler(async (req, res) => {
+  const therapist = await Therapist.findById(req.user.id).select('intake_form').lean();
+  res.json(intakeFormResponse(therapist));
+});
+
+exports.updateIntakeForm = asyncHandler(async (req, res) => {
+  const fields = intakeFormService.normalizeFields(req.body.fields);
+  const therapist = await Therapist.findByIdAndUpdate(
+    req.user.id,
+    { intake_form: { fields, updated_at: new Date() } },
+    { returnDocument: 'after', runValidators: true }
+  )
+    .select('intake_form')
+    .lean();
+  res.json(intakeFormResponse(therapist));
 });
 
 // ---------- Public (unauthenticated) branded profile ----------

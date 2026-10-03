@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarCheck, Copy, ExternalLink, IndianRupee, Inbox, Link2, UserX, Users } from 'lucide-react';
 import Button from '../../components/common/Button';
-import StatCard from '../../components/common/StatCard';
+import StatCard from '../../components/analytics/StatCard';
 import Avatar from '../../components/common/Avatar';
 import { StatusBadge } from '../../components/common/Badge';
 import { CardSkeleton } from '../../components/common/Loader';

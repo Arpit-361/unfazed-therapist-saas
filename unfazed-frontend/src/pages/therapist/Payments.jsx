@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { CreditCard, Download, IndianRupee, Package, Pencil, Plus, Receipt, Wallet } from 'lucide-react';
+import { CreditCard, IndianRupee, Package, Pencil, Plus, Receipt, Wallet } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
-import StatCard from '../../components/common/StatCard';
+import StatCard from '../../components/analytics/StatCard';
 import Tabs from '../../components/common/Tabs';
 import Badge, { StatusBadge } from '../../components/common/Badge';
 import { Select } from '../../components/common/Field';
@@ -10,12 +10,12 @@ import { CardSkeleton } from '../../components/common/Loader';
 import { EmptyState, ErrorState } from '../../components/common/States';
 import PackageCard from '../../components/payments/PackageCard';
 import PackageFormModal from '../../components/payments/PackageFormModal';
+import InvoiceView from '../../components/payments/InvoiceView';
 import LockedFeature from '../../components/entitlements/LockedFeature';
 import { paymentsApi, systemApi } from '../../api/endpoints';
 import { useToast } from '../../context/ToastContext';
 import useApi from '../../hooks/useApi';
 import useEntitlement, { FEATURES } from '../../hooks/useEntitlement';
-import { saveBlobResponse } from '../../utils/download';
 import { fmtDate, formatINR } from '../../utils/format';
 
 function PaymentsTable({ payments, onInvoice }) {
@@ -57,7 +57,7 @@ function PaymentsTable({ payments, onInvoice }) {
                 </td>
                 <td className="px-4 py-3 text-right">
                   {p.invoice_number && (
-                    <Button size="sm" variant="ghost" icon={Download} onClick={() => onInvoice(p)}>
+                    <Button size="sm" variant="ghost" icon={Receipt} onClick={() => onInvoice(p)}>
                       Invoice
                     </Button>
                   )}
@@ -82,8 +82,8 @@ function PaymentsTable({ payments, onInvoice }) {
                 <StatusBadge status={p.status} />
               </div>
               {p.invoice_number && (
-                <Button size="icon" variant="ghost" onClick={() => onInvoice(p)} aria-label="Download invoice">
-                  <Download className="h-4 w-4" />
+                <Button size="icon" variant="ghost" onClick={() => onInvoice(p)} aria-label="View invoice">
+                  <Receipt className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -110,7 +110,7 @@ export default function Payments() {
   const s = summary.data?.summary;
   const pending = useMemo(() => s?.by_status?.created?.count || 0, [s]);
 
-  const downloadInvoice = (p) => saveBlobResponse(paymentsApi.invoice(p.id), `${p.invoice_number}.pdf`).catch((err) => toast.error('Download failed', err.message));
+  const [invoice, setInvoice] = useState(null);
 
   const savePackage = async (body) => {
     if (editing?.id) await paymentsApi.updatePackage(editing.id, body);
@@ -173,8 +173,9 @@ export default function Payments() {
               <CardSkeleton rows={5} />
             </div>
           ) : (
-            <PaymentsTable payments={payments.data.payments} onInvoice={downloadInvoice} />
+            <PaymentsTable payments={payments.data.payments} onInvoice={setInvoice} />
           )}
+          <InvoiceView payment={invoice} open={Boolean(invoice)} onClose={() => setInvoice(null)} requestPdf={paymentsApi.invoice} />
         </div>
       )}
 

@@ -5,6 +5,8 @@ const config = require('../config/env');
 const therapist = require('../controllers/therapistController');
 const { protect, requireRole } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
+const { requireFeature } = require('../middleware/entitlementMiddleware');
+const { FEATURES } = require('../services/entitlementService');
 const ApiError = require('../utils/ApiError');
 
 const router = express.Router();
@@ -56,6 +58,13 @@ router.put(
   therapist.updateMe
 );
 router.get('/slug-available', therapist.checkSlug);
+router.get('/me/intake-form', therapist.getIntakeForm);
+router.put(
+  '/me/intake-form',
+  requireFeature(FEATURES.INTAKE_FORM_BUILDER),
+  validate([body('fields').isArray().withMessage('Form fields must be a list')]),
+  therapist.updateIntakeForm
+);
 router.post('/me/photo', upload.single('photo'), therapist.uploadPhoto);
 
 module.exports = router;

@@ -5,12 +5,13 @@ import Button from '../../components/common/Button';
 import Avatar from '../../components/common/Avatar';
 import Tabs from '../../components/common/Tabs';
 import TagInput from '../../components/common/TagInput';
-import StatCard from '../../components/common/StatCard';
+import StatCard from '../../components/analytics/StatCard';
 import { StatusBadge } from '../../components/common/Badge';
 import { Select } from '../../components/common/Field';
 import { PageLoader } from '../../components/common/Loader';
 import { EmptyState, ErrorState } from '../../components/common/States';
 import InviteLinkModal from '../../components/crm/InviteLinkModal';
+import { CustomResponsesList } from '../../components/crm/CustomIntakeFields';
 import { BookForClientModal } from './Schedule';
 import { clientsApi, paymentsApi } from '../../api/endpoints';
 import useApi from '../../hooks/useApi';
@@ -167,7 +168,14 @@ export default function ClientDetail() {
                 <InfoRow label="Medical conditions" value={history.medical_conditions} />
                 <InfoRow label="Family history" value={history.family_history} />
               </dl>
-            ) : (
+            ) : null}
+            {client.intake_completed && intake.custom_responses?.length > 0 && (
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <h4 className="text-sm font-semibold text-slate-900">Custom questions</h4>
+                <CustomResponsesList responses={intake.custom_responses} />
+              </div>
+            )}
+            {!client.intake_completed && (
               <EmptyState compact icon={ClipboardList} title="Intake not completed yet" description="The client completes intake from their portal before their first session." />
             )}
           </div>

@@ -28,6 +28,8 @@ export const therapistApi = {
   me: () => data(api.get('/therapists/me')),
   update: (body) => data(api.put('/therapists/me', body)),
   checkSlug: (slug) => data(api.get('/therapists/slug-available', { params: { slug } })),
+  intakeForm: () => data(api.get('/therapists/me/intake-form')),
+  updateIntakeForm: (fields) => data(api.put('/therapists/me/intake-form', { fields })),
   uploadPhoto: (file) => {
     const form = new FormData();
     form.append('photo', file);

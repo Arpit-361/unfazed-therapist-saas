@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Activity, CalendarCheck, IndianRupee, UserX, Users } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
-import StatCard from '../../components/common/StatCard';
+import StatCard from '../../components/analytics/StatCard';
 import { CardSkeleton } from '../../components/common/Loader';
 import { EmptyState, ErrorState } from '../../components/common/States';
 import RevenueChart from '../../components/analytics/RevenueChart';

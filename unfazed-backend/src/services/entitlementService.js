@@ -18,6 +18,7 @@ const FEATURES = Object.freeze({
   PACKAGES: 'payments.packages',
   WAITLIST: 'scheduling.waitlist',
   ANALYTICS_ADVANCED: 'analytics.advanced',
+  INTAKE_FORM_BUILDER: 'intake.custom_form',
 });
 
 const FEATURE_LABELS = {
@@ -27,6 +28,7 @@ const FEATURE_LABELS = {
   [FEATURES.PACKAGES]: 'Session packages',
   [FEATURES.WAITLIST]: 'Waitlist',
   [FEATURES.ANALYTICS_ADVANCED]: 'Advanced analytics',
+  [FEATURES.INTAKE_FORM_BUILDER]: 'Custom intake form builder',
 };
 
 // Limit-based features: allowed while usage < tier limit (missing/null limit => unlimited).

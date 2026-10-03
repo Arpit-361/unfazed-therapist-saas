@@ -46,6 +46,7 @@ router.put(
     optionalText('history.medical_conditions'),
     optionalText('history.family_history'),
     optionalText('goals', 2000),
+    body('custom_answers').optional().isObject().withMessage('Invalid answers to custom questions'),
   ]),
   clients.portalSubmitIntake
 );

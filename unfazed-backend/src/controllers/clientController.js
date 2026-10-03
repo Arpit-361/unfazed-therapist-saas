@@ -7,6 +7,7 @@ const SessionNote = require('../models/SessionNote');
 const ClientPackage = require('../models/ClientPackage');
 const entitlementService = require('../services/entitlementService');
 const clientService = require('../services/clientService');
+const intakeFormService = require('../services/intakeFormService');
 const { CONSENT_TEXT, CONSENT_VERSION } = require('../config/consent');
 const {
   serializeClientForTherapist,
@@ -172,18 +173,28 @@ exports.portalMe = asyncHandler(async (req, res) => {
     Therapist.findById(req.user.therapistId).lean(),
   ]);
   const { FEATURES } = entitlementService;
-  const [chat, packages, waitlist] = await Promise.all([
+  const [chat, packages, waitlist, intakeFields] = await Promise.all([
     entitlementService.canAccess(therapist._id, FEATURES.CHAT),
     entitlementService.canAccess(therapist._id, FEATURES.PACKAGES),
     entitlementService.canAccess(therapist._id, FEATURES.WAITLIST),
+    activeIntakeFields(therapist),
   ]);
   res.json({
     success: true,
     client: serializeClientSelf(client),
     therapist: serializeTherapistPublic(therapist),
     features: { chat: chat.allowed, packages: packages.allowed, waitlist: waitlist.allowed },
+    intake_fields: intakeFormService.serializeFields(intakeFields),
   });
 });
+
+// Custom questions apply only while the therapist's plan includes the intake form builder.
+async function activeIntakeFields(therapist) {
+  const fields = therapist.intake_form?.fields || [];
+  if (!fields.length) return [];
+  const access = await entitlementService.canAccess(therapist._id, entitlementService.FEATURES.INTAKE_FORM_BUILDER);
+  return access.allowed ? fields : [];
+}
 
 exports.portalUpdateProfile = asyncHandler(async (req, res) => {
   const client = await Client.findById(req.user.id);
@@ -195,8 +206,12 @@ exports.portalUpdateProfile = asyncHandler(async (req, res) => {
 });
 
 exports.portalSubmitIntake = asyncHandler(async (req, res) => {
-  const client = await Client.findById(req.user.id);
+  const [client, therapist] = await Promise.all([
+    Client.findById(req.user.id),
+    Therapist.findById(req.user.therapistId).select('intake_form').lean(),
+  ]);
   const { demographics = {}, presenting_concern, history = {}, goals } = req.body;
+  const customResponses = intakeFormService.buildResponses(await activeIntakeFields(therapist), req.body.custom_answers);
   client.intake = {
     demographics: {
       date_of_birth: demographics.date_of_birth || '',
@@ -214,6 +229,7 @@ exports.portalSubmitIntake = asyncHandler(async (req, res) => {
       family_history: history.family_history || '',
     },
     goals: goals || '',
+    custom_responses: customResponses,
     submitted_at: new Date(),
   };
   await client.save();

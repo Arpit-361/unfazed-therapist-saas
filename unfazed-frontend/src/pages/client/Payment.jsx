@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, Package, Receipt } from 'lucide-react';
+import { Package, Receipt } from 'lucide-react';
 import PageHeader from '../../components/common/PageHeader';
 import Button from '../../components/common/Button';
 import { StatusBadge } from '../../components/common/Badge';
@@ -7,11 +7,11 @@ import { CardSkeleton } from '../../components/common/Loader';
 import { EmptyState, ErrorState } from '../../components/common/States';
 import PackageCard from '../../components/payments/PackageCard';
 import CheckoutForm from '../../components/payments/CheckoutForm';
+import InvoiceView from '../../components/payments/InvoiceView';
 import { portalApi } from '../../api/endpoints';
 import { useToast } from '../../context/ToastContext';
 import useApi from '../../hooks/useApi';
 import { usePortal } from '../../components/layout/PortalLayout';
-import { saveBlobResponse } from '../../utils/download';
 import { fmtDate, formatINR } from '../../utils/format';
 
 export default function Payment() {
@@ -21,6 +21,7 @@ export default function Payment() {
   const payments = useApi(() => portalApi.payments(), []);
   const [checkout, setCheckout] = useState(null);
   const [busy, setBusy] = useState(null);
+  const [invoice, setInvoice] = useState(null);
 
   const buy = async (pkg) => {
     setBusy(pkg.id);
@@ -115,7 +116,7 @@ export default function Payment() {
                   <span className="text-sm font-semibold">{formatINR(p.amount)}</span>
                   <StatusBadge status={p.status} />
                   {p.invoice_number && (
-                    <Button size="sm" variant="ghost" icon={Download} onClick={() => saveBlobResponse(portalApi.invoice(p.id), `${p.invoice_number}.pdf`).catch((e) => toast.error('Download failed', e.message))}>
+                    <Button size="sm" variant="ghost" icon={Receipt} onClick={() => setInvoice(p)}>
                       Invoice
                     </Button>
                   )}
@@ -130,6 +131,8 @@ export default function Payment() {
           </div>
         )}
       </section>
+
+      <InvoiceView payment={invoice} open={Boolean(invoice)} onClose={() => setInvoice(null)} requestPdf={portalApi.invoice} timezone={client.timezone} />
 
       <CheckoutForm
         open={Boolean(checkout)}

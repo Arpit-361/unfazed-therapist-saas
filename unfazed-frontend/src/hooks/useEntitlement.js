@@ -8,6 +8,7 @@ export const FEATURES = Object.freeze({
   PACKAGES: 'payments.packages',
   WAITLIST: 'scheduling.waitlist',
   ANALYTICS_ADVANCED: 'analytics.advanced',
+  INTAKE_FORM_BUILDER: 'intake.custom_form',
 });
 
 /**
